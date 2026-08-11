@@ -32,6 +32,7 @@ class GameTableLayout extends StatelessWidget {
     this.onDiscardTap,
     this.onHandCardTap,
     this.selectedHandPositions = const {},
+    this.disabledHandPositions = const {},
   });
 
   final PlayerModel localPlayer;
@@ -41,6 +42,7 @@ class GameTableLayout extends StatelessWidget {
   final VoidCallback? onDiscardTap;
   final void Function(int position)? onHandCardTap;
   final Set<int> selectedHandPositions;
+  final Set<int> disabledHandPositions;
 
   /// Au-delà de cet angle (par rapport à la verticale du centre), un
   /// adversaire est considéré "sur le côté" -> cartes empilées verticalement.
@@ -117,6 +119,7 @@ class GameTableLayout extends StatelessWidget {
               child: PlayerHandWidget(
                 hand: localPlayer.hand,
                 selectedPositions: selectedHandPositions,
+                disabledPositions: disabledHandPositions,
                 onCardTap: onHandCardTap,
                 maxCardHeight: handCardHeight,
               ),
