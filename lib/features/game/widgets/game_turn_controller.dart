@@ -7,44 +7,41 @@ import '../../../data/models/player_model.dart';
 import '../../../data/models/round_model.dart';
 import 'draw_decision_sheet.dart';
 import 'game_table_layout.dart';
+import 'power_target_dialogs.dart';
 
 enum _TurnPhase {
-  /// INITIAL_PEEK : le joueur sélectionne 2 cartes de sa main à regarder.
   awaitingPeekSelection,
-
-  /// ChooseInitialPeekDto envoyé, en attente de la réponse serveur.
   confirmingPeek,
-
-  /// Les 2 cartes choisies sont révélées, compte à rebours avant de se
-  /// recacher automatiquement.
   revealingPeek,
-
-  /// Rien en attente : le joueur peut piocher ou tenter une paire (si son tour).
   idle,
-
-  /// Carte piochée reçue, la feuille de décision est affichée.
   awaitingDecision,
-
-  /// Le joueur a choisi "échanger" : on attend qu'il tape une carte de sa
-  /// main pour désigner la position à remplacer.
   awaitingSwapTarget,
-
-  /// Mode "défausser une paire" (Option B) : le joueur sélectionne 2 cartes.
   awaitingPairSelection,
-
-  /// PairAttemptDto envoyé, en attente de la réponse serveur.
   submittingPair,
+
+  /// Pouvoir 7 : sélection d'une de ses propres cartes cachées.
+  awaitingPower7Target,
+
+  /// Pouvoir 8 : dialogs en cours (choix adversaire puis position).
+  awaitingPower8Target,
+
+  /// Pouvoir 9 : sélection de sa propre carte (1re étape).
+  awaitingPower9Source,
+
+  /// Pouvoir 9 : dialogs en cours pour désigner la carte adverse.
+  awaitingPower9Target,
 }
 
 enum _PairFeedback { none, success, failure }
 
+/// Durée avant qu'un pouvoir non résolu soit annulé automatiquement
+/// (doc §5 : "prévoir un timeout pour éviter de bloquer la partie").
+const _powerTargetTimeout = Duration(seconds: 15);
+
 /// Orchestre TOUTES les interactions du joueur local sur le plateau :
-/// INITIAL_PEEK (sélection de 2 cartes), puis piocher/échanger/défausser,
-/// puis défausser une paire (Option B).
-///
-/// Reste sur le MÊME plateau (`GameTableLayout`) du début à la fin — pas
-/// d'écran séparé pour INITIAL_PEEK, juste un mode de sélection différent
-/// sur la main, exactement comme le mode paire.
+/// INITIAL_PEEK, piocher/échanger/défausser, défausser une paire, et
+/// activer les pouvoirs (7 : regarder sa carte, 8 : espionner un
+/// adversaire, 9 : échange aveugle avec un adversaire).
 ///
 /// Ce widget ne connaît RIEN du socket : les callbacks sont ce que l'écran
 /// parent (plus tard, le `GameBloc`) devra brancher aux vrais events.
@@ -61,6 +58,9 @@ class GameTurnController extends StatefulWidget {
     required this.onSwapCard,
     required this.onDiscardCard,
     required this.onPairAttempt,
+    required this.onPowerSelfPeek,
+    required this.onPowerSpy,
+    required this.onPowerBlindSwap,
     this.peekRevealDuration = const Duration(seconds: 5),
   });
 
@@ -68,32 +68,28 @@ class GameTurnController extends StatefulWidget {
   final List<PlayerModel> opponents;
   final RoundModel round;
 
-  /// `true` tant que le joueur n'a pas encore fait son INITIAL_PEEK.
   final bool needsInitialPeek;
-
-  /// Émet `ChooseInitialPeekDto` (positions choisies). C'est à l'appelant
-  /// de mettre à jour `localPlayer.hand` avec les 2 cartes révélées
-  /// (le contrôleur ne stocke aucune donnée de carte lui-même).
   final Future<void> Function(List<int> positions) onConfirmPeek;
-
-  /// Appelé une fois la fenêtre de révélation terminée -> l'appelant doit
-  /// recacher les 2 cartes dans `localPlayer.hand`.
   final VoidCallback onPeekComplete;
-
   final Duration peekRevealDuration;
 
-  /// Doit émettre `turn:draw` (DrawCardDto) et retourner la carte reçue.
   final Future<CardModel> Function() onDrawCard;
-
-  /// Doit émettre `turn:swap` (SwapCardDto).
   final void Function(CardModel drawnCard, int handPosition) onSwapCard;
-
-  /// Doit émettre `turn:discard` (DiscardCardDto).
   final void Function(CardModel drawnCard, {required bool usePower}) onDiscardCard;
-
-  /// Doit émettre `turn:discard_pair` (PairAttemptDto) et retourner `true`
-  /// en cas de succès.
   final Future<bool> Function(int firstPosition, int secondPosition) onPairAttempt;
+
+  /// Pouvoir 7 : émet PowerTargetDto (powerRank=7, targetPlayerId=soi-même,
+  /// targetPosition=ownPosition) et retourne la carte révélée.
+  final Future<CardModel> Function(int ownPosition) onPowerSelfPeek;
+
+  /// Pouvoir 8 : émet PowerTargetDto (powerRank=8) et retourne la carte
+  /// révélée de l'adversaire ciblé.
+  final Future<CardModel> Function(String opponentId, int opponentPosition) onPowerSpy;
+
+  /// Pouvoir 9 : émet PowerTargetDto (powerRank=9) — échange sans révéler
+  /// aucune des deux cartes.
+  final Future<void> Function(int ownPosition, String opponentId, int opponentPosition)
+      onPowerBlindSwap;
 
   @override
   State<GameTurnController> createState() => _GameTurnControllerState();
@@ -112,6 +108,12 @@ class _GameTurnControllerState extends State<GameTurnController> {
   _PairFeedback _pairFeedback = _PairFeedback.none;
   Timer? _pairFeedbackTimer;
 
+  /// Position de sa propre carte choisie pour le pouvoir 9, en attendant
+  /// le choix de la carte adverse via les dialogs.
+  int? _power9SourcePosition;
+
+  Timer? _powerTimeoutTimer;
+
   bool get _isMyTurn => widget.localPlayer.isCurrentTurn;
   bool get _canAttemptPair => widget.localPlayer.hand.length >= 4;
 
@@ -125,6 +127,7 @@ class _GameTurnControllerState extends State<GameTurnController> {
   void dispose() {
     _peekTimer?.cancel();
     _pairFeedbackTimer?.cancel();
+    _powerTimeoutTimer?.cancel();
     super.dispose();
   }
 
@@ -198,13 +201,161 @@ class _GameTurnControllerState extends State<GameTurnController> {
         onChooseDiscard: (usePower) {
           Navigator.of(sheetContext).pop();
           widget.onDiscardCard(card, usePower: usePower);
-          setState(() {
-            _drawnCard = null;
-            _phase = _TurnPhase.idle;
-          });
+          setState(() => _drawnCard = null);
+          _afterDiscard(card, usePower: usePower);
         },
       ),
     );
+  }
+
+  /// Après une défausse directe : si le joueur a choisi d'activer le
+  /// pouvoir, on entre dans le sous-état correspondant plutôt que de
+  /// revenir directement à `idle`.
+  void _afterDiscard(CardModel card, {required bool usePower}) {
+    if (!usePower || !card.hasPower) {
+      setState(() => _phase = _TurnPhase.idle);
+      return;
+    }
+
+    switch (card.rank) {
+      case '7':
+        setState(() => _phase = _TurnPhase.awaitingPower7Target);
+        _startPowerTimeout();
+      case '8':
+        setState(() => _phase = _TurnPhase.awaitingPower8Target);
+        _startPowerTimeout();
+        _runPower8Flow();
+      case '9':
+        setState(() => _phase = _TurnPhase.awaitingPower9Source);
+        _startPowerTimeout();
+      default:
+        setState(() => _phase = _TurnPhase.idle);
+    }
+  }
+
+  void _startPowerTimeout() {
+    _powerTimeoutTimer?.cancel();
+    _powerTimeoutTimer = Timer(_powerTargetTimeout, () {
+      // Le joueur n'a pas répondu à temps : on annule proprement le
+      // pouvoir plutôt que de bloquer la partie (doc §5).
+      if (!mounted) return;
+      setState(() {
+        _phase = _TurnPhase.idle;
+        _power9SourcePosition = null;
+      });
+    });
+  }
+
+  void _cancelPowerTimeout() {
+    _powerTimeoutTimer?.cancel();
+    _powerTimeoutTimer = null;
+  }
+
+  // --- Pouvoir 7 : regarder une de ses propres cartes ---
+
+  Future<void> _handlePower7Tap(int position) async {
+    _cancelPowerTimeout();
+    final revealed = await widget.onPowerSelfPeek(position);
+    if (!mounted) return;
+
+    await showRevealedCardDialog(
+      context,
+      card: revealed,
+      label: 'Votre carte (position ${position + 1})',
+    );
+    if (!mounted) return;
+    setState(() => _phase = _TurnPhase.idle);
+  }
+
+  // --- Pouvoir 8 : espionner un adversaire ---
+
+  Future<void> _runPower8Flow() async {
+    final opponent = await showChooseOpponentDialog(
+      context,
+      opponents: widget.opponents,
+      title: 'Espionner qui ?',
+    );
+    if (!mounted) return;
+    if (opponent == null) {
+      _cancelAndReturnToIdle();
+      return;
+    }
+
+    final position = await showChoosePositionDialog(
+      context,
+      cardCount: opponent.hiddenCardCount,
+      title: 'Quelle carte de ${opponent.name} ?',
+    );
+    if (!mounted) return;
+    if (position == null) {
+      _cancelAndReturnToIdle();
+      return;
+    }
+
+    _cancelPowerTimeout();
+    final revealed = await widget.onPowerSpy(opponent.id, position);
+    if (!mounted) return;
+
+    await showRevealedCardDialog(
+      context,
+      card: revealed,
+      label: 'Carte de ${opponent.name} (position ${position + 1})',
+    );
+    if (!mounted) return;
+    setState(() => _phase = _TurnPhase.idle);
+  }
+
+  // --- Pouvoir 9 : échange aveugle avec un adversaire ---
+
+  Future<void> _handlePower9SourceTap(int position) async {
+    setState(() {
+      _power9SourcePosition = position;
+      _phase = _TurnPhase.awaitingPower9Target;
+    });
+    await _runPower9TargetFlow();
+  }
+
+  Future<void> _runPower9TargetFlow() async {
+    final sourcePosition = _power9SourcePosition;
+    if (sourcePosition == null) return;
+
+    final opponent = await showChooseOpponentDialog(
+      context,
+      opponents: widget.opponents,
+      title: 'Échanger votre carte avec qui ?',
+    );
+    if (!mounted) return;
+    if (opponent == null) {
+      _cancelAndReturnToIdle();
+      return;
+    }
+
+    final position = await showChoosePositionDialog(
+      context,
+      cardCount: opponent.hiddenCardCount,
+      title: 'Quelle carte de ${opponent.name} ?',
+    );
+    if (!mounted) return;
+    if (position == null) {
+      _cancelAndReturnToIdle();
+      return;
+    }
+
+    _cancelPowerTimeout();
+    await widget.onPowerBlindSwap(sourcePosition, opponent.id, position);
+    if (!mounted) return;
+    setState(() {
+      _power9SourcePosition = null;
+      _phase = _TurnPhase.idle;
+    });
+  }
+
+  void _cancelAndReturnToIdle() {
+    _cancelPowerTimeout();
+    setState(() {
+      _power9SourcePosition = null;
+      _phase = _TurnPhase.idle;
+    });
   }
 
   // --- Défausser une paire ---
@@ -270,6 +421,10 @@ class _GameTurnControllerState extends State<GameTurnController> {
         }
       case _TurnPhase.awaitingPairSelection:
         _togglePairPosition(position);
+      case _TurnPhase.awaitingPower7Target:
+        _handlePower7Tap(position);
+      case _TurnPhase.awaitingPower9Source:
+        _handlePower9SourceTap(position);
       default:
         break;
     }
@@ -283,8 +438,11 @@ class _GameTurnControllerState extends State<GameTurnController> {
     final isSwapMode = _phase == _TurnPhase.awaitingSwapTarget;
     final isPairMode = _phase == _TurnPhase.awaitingPairSelection;
     final isSubmittingPair = _phase == _TurnPhase.submittingPair;
+    final isPower7 = _phase == _TurnPhase.awaitingPower7Target;
+    final isPower9Source = _phase == _TurnPhase.awaitingPower9Source;
 
-    final handInteractive = isPeekSelecting || isSwapMode || isPairMode;
+    final handInteractive =
+        isPeekSelecting || isSwapMode || isPairMode || isPower7 || isPower9Source;
     final drawInteractive = _isMyTurn && _phase == _TurnPhase.idle && !_isDrawing;
 
     final disabledPositions = (!_isMyTurn && _phase == _TurnPhase.idle)
@@ -307,8 +465,9 @@ class _GameTurnControllerState extends State<GameTurnController> {
 
         if (isPeekSelecting) _buildPeekSelectionControls(),
         if (isPeekRevealing) _buildBanner('Mémorisez-les ! Elles se cachent dans $_peekSecondsLeft s'),
-
         if (isSwapMode) _buildBanner("Touchez une carte de votre main pour l'échanger"),
+        if (isPower7) _buildBanner('Touchez une de vos cartes cachées pour la regarder'),
+        if (isPower9Source) _buildBanner('Touchez votre carte à échanger (à l\'aveugle)'),
 
         if (isPairMode) _buildPairControls(),
 

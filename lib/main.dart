@@ -29,31 +29,43 @@ class _TestAppState extends State<TestApp> {
   bool _needsInitialPeek = true;
 
   // --- "Vérité serveur" (jamais transmise telle quelle à CardWidget) ---
-  // Simule ce qui vivrait en base côté backend. Notre app joue les deux
-  // rôles (serveur ET client) pour l'instant, donc on sépare nous-mêmes
-  // pour ne jamais transmettre à `_hand` (vue client) une valeur que le
-  // joueur n'est pas censé connaître (doc 01 §3).
   late List<CardModel> _trueHand;
+  List<CardModel> _hand = const [];
 
-  // --- Vue client : c'est CE QUE CardWidget reçoit et affiche ---
-  late List<CardModel> _hand;
+  // --- Vérité serveur des adversaires (juste pour simuler pouvoirs 8/9 ---
+  // en vrai, ceci vit uniquement en base côté backend, jamais côté client,
+  // même caché : c'est notre app qui doit jouer ce rôle ici faute de serveur.
+  final Map<String, List<CardModel>> _opponentTrueHands = {
+    'p1': List.generate(4, (_) => _staticRandomCard()),
+    'p2': List.generate(3, (_) => _staticRandomCard()),
+    'p3': List.generate(5, (_) => _staticRandomCard()),
+  };
 
   CardModel? _discardTop;
   int _drawPileCount = 38;
   bool _isMyTurn = true;
 
-  final _random = Random();
+  static final _random = Random();
   static const _ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   static const _suits = ['♠', '♥', '♦', '♣'];
+
+  static CardModel _staticRandomCard() {
+    final rank = _ranks[_random.nextInt(_ranks.length)];
+    final suit = _suits[_random.nextInt(_suits.length)];
+    return CardModel(
+      id: 'card_${DateTime.now().microsecondsSinceEpoch}_${_random.nextInt(9999)}',
+      rank: rank,
+      suit: suit,
+      hidden: false,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    _trueHand = List.generate(4, (_) => _randomCard());
-    // Tout est caché au départ : c'est justement le but du mode de
-    // sélection INITIAL_PEEK que de laisser le joueur choisir quoi voir.
+    _trueHand = List.generate(4, (_) => _staticRandomCard());
     _hand = List.generate(4, (i) => CardModel(id: _trueHand[i].id, hidden: true));
-    _discardTop = _randomCard();
+    _discardTop = _staticRandomCard();
   }
 
   CardModel _randomCard({bool hidden = false, String? id}) {
@@ -67,8 +79,8 @@ class _TestAppState extends State<TestApp> {
     );
   }
 
-  /// Simule `ChooseInitialPeekDto` -> `player:peeked_initial`.
-  /// Révèle immédiatement les 2 cartes choisies dans `_hand` (vue client).
+  // --- INITIAL_PEEK ---
+
   Future<void> _simulateChooseInitialPeek(List<int> positions) async {
     await Future.delayed(const Duration(milliseconds: 400));
     setState(() {
@@ -80,7 +92,6 @@ class _TestAppState extends State<TestApp> {
     });
   }
 
-  /// Fenêtre de révélation terminée : tout redevient caché, le jeu commence.
   void _handlePeekComplete() {
     setState(() {
       _hand = List.generate(4, (i) => CardModel(id: _trueHand[i].id, hidden: true));
@@ -88,15 +99,14 @@ class _TestAppState extends State<TestApp> {
     });
   }
 
-  /// Simule `turn:draw`.
+  // --- Piocher / échanger / défausser ---
+
   Future<CardModel> _simulateDraw() async {
     await Future.delayed(const Duration(milliseconds: 500));
     setState(() => _drawPileCount--);
     return _randomCard();
   }
 
-  /// Simule `turn:swap`. La carte piochée entre en main mais REDEVIENT
-  /// cachée (le joueur la connaît de mémoire, pas via l'app).
   void _simulateSwap(CardModel drawnCard, int handPosition) {
     setState(() {
       final revealedOldCard = _trueHand[handPosition].copyWith(hidden: false);
@@ -115,17 +125,20 @@ class _TestAppState extends State<TestApp> {
     debugPrint('SwapCardDto: drawnCardId=${drawnCard.id}, handPosition=$handPosition');
   }
 
-  /// Simule `turn:discard` (défausse directe, pas d'échange).
   void _simulateDiscard(CardModel drawnCard, {required bool usePower}) {
-    setState(() {
-      _discardTop = drawnCard;
-      _isMyTurn = false;
-    });
+    setState(() => _discardTop = drawnCard);
+    // NB : le tour ne se termine plus ici si un pouvoir est activé — c'est
+    // GameTurnController qui gère la suite (sous-état AWAITING_POWER_TARGET).
+    // En vrai, c'est le serveur qui décide quand renvoyer turn:started au
+    // joueur suivant, une fois le pouvoir résolu (ou le timeout écoulé).
+    if (!usePower || !drawnCard.hasPower) {
+      setState(() => _isMyTurn = false);
+    }
     debugPrint('DiscardCardDto: drawnCardId=${drawnCard.id}, usePower=$usePower');
   }
 
-  /// Simule `turn:discard_pair`. Le succès/échec se calcule TOUJOURS sur
-  /// `_trueHand` (la vérité), jamais sur `_hand` — comme le vrai backend.
+  // --- Défausser une paire ---
+
   Future<bool> _simulatePairAttempt(int firstPosition, int secondPosition) async {
     await Future.delayed(const Duration(milliseconds: 500));
 
@@ -154,6 +167,59 @@ class _TestAppState extends State<TestApp> {
     return success;
   }
 
+  // --- Pouvoirs ---
+
+  /// Pouvoir 7 : révèle une de ses propres cartes, temporairement.
+  Future<CardModel> _simulatePowerSelfPeek(int ownPosition) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    setState(() => _isMyTurn = false); // le tour se termine une fois le pouvoir résolu
+    return _trueHand[ownPosition].copyWith(hidden: false);
+  }
+
+  /// Pouvoir 8 : révèle une carte d'un adversaire, temporairement.
+  Future<CardModel> _simulatePowerSpy(String opponentId, int opponentPosition) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    setState(() => _isMyTurn = false);
+    final trueHand = _opponentTrueHands[opponentId]!;
+    return trueHand[opponentPosition].copyWith(hidden: false);
+  }
+
+  /// Pouvoir 9 : échange une carte à soi avec une carte adverse, SANS
+  /// révéler aucune des deux. Met à jour les 2 "vérités" en conséquence.
+  Future<void> _simulatePowerBlindSwap(
+    int ownPosition,
+    String opponentId,
+    int opponentPosition,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    setState(() {
+      final opponentTrueHand = List<CardModel>.from(_opponentTrueHands[opponentId]!);
+      final myCard = _trueHand[ownPosition];
+      final opponentCard = opponentTrueHand[opponentPosition];
+
+      final newTrueHand = List<CardModel>.from(_trueHand);
+      newTrueHand[ownPosition] = opponentCard.copyWith(hidden: true);
+      _trueHand = newTrueHand;
+
+      opponentTrueHand[opponentPosition] = myCard.copyWith(hidden: true);
+      _opponentTrueHands[opponentId] = opponentTrueHand;
+
+      // La vue client de cette position reste cachée (nouvel id, même état
+      // "hidden" qu'avant — ni l'un ni l'autre joueur ne voit la valeur).
+      final newHand = List<CardModel>.from(_hand);
+      newHand[ownPosition] = CardModel(id: opponentCard.id, hidden: true);
+      _hand = newHand;
+
+      _isMyTurn = false;
+    });
+
+    debugPrint(
+      'PowerTargetDto: powerRank=9, ownPosition=$ownPosition, '
+      'opponentId=$opponentId, opponentPosition=$opponentPosition',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final localPlayer = PlayerModel(
@@ -165,10 +231,29 @@ class _TestAppState extends State<TestApp> {
       hand: _hand,
     );
 
-    const opponents = [
-      PlayerModel(id: 'p1', name: 'Yosr', handSize: 4, isConnected: true, isCurrentTurn: false),
-      PlayerModel(id: 'p2', name: 'Ali', handSize: 3, isConnected: false, isCurrentTurn: false),
-      PlayerModel(id: 'p3', name: 'Nour', handSize: 5, isConnected: true, isCurrentTurn: false, hasCalledPablo: true),
+    final opponents = [
+      PlayerModel(
+        id: 'p1',
+        name: 'Yosr',
+        handSize: _opponentTrueHands['p1']!.length,
+        isConnected: true,
+        isCurrentTurn: false,
+      ),
+      PlayerModel(
+        id: 'p2',
+        name: 'Ali',
+        handSize: _opponentTrueHands['p2']!.length,
+        isConnected: false,
+        isCurrentTurn: false,
+      ),
+      PlayerModel(
+        id: 'p3',
+        name: 'Nour',
+        handSize: _opponentTrueHands['p3']!.length,
+        isConnected: true,
+        isCurrentTurn: false,
+        hasCalledPablo: true,
+      ),
     ];
 
     final round = RoundModel(
@@ -195,6 +280,9 @@ class _TestAppState extends State<TestApp> {
                 onSwapCard: _simulateSwap,
                 onDiscardCard: _simulateDiscard,
                 onPairAttempt: _simulatePairAttempt,
+                onPowerSelfPeek: _simulatePowerSelfPeek,
+                onPowerSpy: _simulatePowerSpy,
+                onPowerBlindSwap: _simulatePowerBlindSwap,
               ),
               Positioned(
                 top: 8,
