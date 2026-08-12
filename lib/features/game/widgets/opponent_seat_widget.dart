@@ -183,7 +183,7 @@ class OpponentSeatWidget extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: _accentGold.withOpacity(0.6),
+                  color: _accentGold.withValues(alpha: 0.6),
                   blurRadius: 10,
                   spreadRadius: 1,
                 ),

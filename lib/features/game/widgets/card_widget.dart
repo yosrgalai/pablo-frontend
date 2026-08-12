@@ -183,8 +183,8 @@ class _CardWidgetState extends State<CardWidget>
 
   Color _borderColor(bool isSelected, bool isSelectable) {
     if (isSelected) return _CardColors.accentGold;
-    if (isSelectable) return _CardColors.accentGold.withOpacity(0.4);
-    return Colors.black.withOpacity(0.15);
+    if (isSelectable) return _CardColors.accentGold.withValues(alpha: 0.4);
+    return Colors.black.withValues(alpha: 0.15);
   }
 
   // --- Rendus de secours (asset manquant ou donnée incohérente) ---
@@ -195,7 +195,7 @@ class _CardWidgetState extends State<CardWidget>
       child: Center(
         child: Icon(
           Icons.style_outlined,
-          color: _CardColors.accentGold.withOpacity(0.6),
+          color: _CardColors.accentGold.withValues(alpha: 0.6),
           size: widget.width * 0.5,
         ),
       ),
