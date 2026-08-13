@@ -477,6 +477,10 @@ class _GameTurnControllerState extends State<GameTurnController> {
         if (_isDrawing || isSubmittingPair || isPeekConfirming) const _LoadingOverlay(),
 
         if (_pairFeedback != _PairFeedback.none) _buildPairFeedbackFlash(),
+
+        // Statut de tour : toujours visible, pour qu'on sache en un coup
+        // d'œil si on peut agir ou si on attend les autres joueurs.
+        if (_phase == _TurnPhase.idle) _buildTurnStatusBanner(),
       ],
     );
   }
@@ -521,17 +525,58 @@ class _GameTurnControllerState extends State<GameTurnController> {
     );
   }
 
+  Widget _buildTurnStatusBanner() {
+    final isMyTurn = _isMyTurn;
+    return Positioned(
+      top: 12,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          decoration: BoxDecoration(
+            color: isMyTurn ? const Color(0xFFE0B24C) : Colors.black.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isMyTurn ? Icons.touch_app : Icons.hourglass_top,
+                size: 16,
+                color: isMyTurn ? Colors.black : Colors.white70,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isMyTurn ? 'À vous de jouer' : "En attente des autres joueurs",
+                style: TextStyle(
+                  color: isMyTurn ? Colors.black : Colors.white70,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPairEntryButton() {
     return Positioned(
       right: 16,
       bottom: 110,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE0B24C),
           foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         onPressed: _enterPairSelectionMode,
-        child: const Text('Défausser une paire'),
+        icon: const Icon(Icons.style, size: 18),
+        label: const Text('Défausser une paire'),
       ),
     );
   }
@@ -586,7 +631,7 @@ class _GameTurnControllerState extends State<GameTurnController> {
     return Positioned.fill(
       child: IgnorePointer(
         child: Container(
-          color: (isSuccess ? const Color(0xFF3FA76B) : const Color(0xFFD64545)).withValues(alpha: 0.18),
+          color: (isSuccess ? const Color(0xFF3FA76B) : const Color(0xFFD64545)).withOpacity(0.18),
           child: Center(
             child: Icon(
               isSuccess ? Icons.check_circle : Icons.cancel,
@@ -609,7 +654,7 @@ class _Banner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
+        color: Colors.black.withOpacity(0.55),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

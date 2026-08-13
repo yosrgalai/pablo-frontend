@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/card_model.dart';
 import 'card_widget.dart';
+import 'draw_pile_widget.dart' show drawPileHeroTag;
 
 /// Feuille de décision affichée juste après avoir pioché : le joueur
 /// choisit d'échanger la carte avec une carte de sa main, ou de la
@@ -41,7 +42,12 @@ class DrawDecisionSheet extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 14),
             ),
             const SizedBox(height: 12),
-            CardWidget(card: drawnCard, width: 80, height: 120),
+            // Même tag que DrawPileWidget : la carte "vole" visuellement
+            // de la pioche jusqu'ici à l'ouverture de la feuille.
+            Hero(
+              tag: drawPileHeroTag,
+              child: CardWidget(card: drawnCard, width: 80, height: 120),
+            ),
             const SizedBox(height: 20),
             Row(
               children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/card_model.dart';
 import 'card_widget.dart';
@@ -6,6 +7,9 @@ import 'card_widget.dart';
 /// Défausse : affiche toujours la carte du dessus, face visible
 /// (jamais cachée — c'est une carte publique par définition).
 /// Affiche un emplacement vide si aucune carte n'a encore été défaussée.
+///
+/// Chaque nouvelle carte (identifiée par son `id`) joue une animation
+/// d'entrée (fondu + zoom léger) au moment où elle arrive en défausse.
 class DiscardPileWidget extends StatelessWidget {
   const DiscardPileWidget({
     super.key,
@@ -34,7 +38,10 @@ class DiscardPileWidget extends StatelessWidget {
       visualState:
           onTap == null ? CardVisualState.normal : CardVisualState.selectable,
       onTap: onTap,
-    );
+    )
+        .animate(key: ValueKey('discard-${card.id}'))
+        .fadeIn(duration: 220.ms, curve: Curves.easeOut)
+        .scale(begin: const Offset(0.75, 0.75), end: const Offset(1, 1), duration: 220.ms, curve: Curves.easeOut);
   }
 }
 

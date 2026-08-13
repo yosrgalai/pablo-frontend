@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/card_model.dart';
 import 'card_widget.dart';
@@ -11,6 +10,12 @@ import 'card_widget.dart';
 /// disponible et le nombre de cartes (4 normalement, jusqu'à 5+ après une
 /// pénalité de paire ratée) pour toujours tenir sans scroll horizontal
 /// (contrainte "écran de téléphone", doc backend §3).
+///
+/// Chaque carte est identifiée par son `id` (via `ValueKey`) : quand une
+/// NOUVELLE carte apparaît à une position (échange, pénalité), elle joue
+/// une animation d'entrée (fondu + léger glissement). Les cartes déjà
+/// présentes ne la rejouent jamais, y compris quand leur état visuel
+/// change (sélection, désactivation).
 class PlayerHandWidget extends StatelessWidget {
   const PlayerHandWidget({
     super.key,
@@ -53,7 +58,7 @@ class PlayerHandWidget extends StatelessWidget {
 
     final effectiveMaxWidth = maxCardHeight == null
         ? maxCardWidth
-        : math.min(maxCardWidth, maxCardHeight! / 1.5);
+        : (maxCardWidth < maxCardHeight! / 1.5 ? maxCardWidth : maxCardHeight! / 1.5);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -76,7 +81,10 @@ class PlayerHandWidget extends StatelessWidget {
                   height: height,
                   visualState: _stateFor(i),
                   onTap: onCardTap == null ? null : () => onCardTap!(i),
-                ),
+                )
+                    .animate(key: ValueKey('hand-${hand[i].id}'))
+                    .fadeIn(duration: 250.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.18, end: 0, duration: 250.ms, curve: Curves.easeOut),
               ],
             ],
           ),

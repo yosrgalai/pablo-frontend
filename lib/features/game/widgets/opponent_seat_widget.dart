@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/card_model.dart';
 import '../../../data/models/player_model.dart';
@@ -122,7 +123,10 @@ class OpponentSeatWidget extends StatelessWidget {
             card: CardModel(id: 'opponent_${player.id}_$i', hidden: true),
             width: cardWidth,
             height: cardHeight,
-          ),
+          )
+              .animate(key: ValueKey('opp-row-${player.id}-$i'))
+              .fadeIn(duration: 220.ms)
+              .slideY(begin: 0.2, end: 0, duration: 220.ms, curve: Curves.easeOut),
         ],
       ],
     );
@@ -161,7 +165,10 @@ class OpponentSeatWidget extends StatelessWidget {
                   width: displayedThickness,
                   height: displayedLength,
                 ),
-              ),
+              )
+                  .animate(key: ValueKey('opp-col-${player.id}-$i'))
+                  .fadeIn(duration: 220.ms)
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 220.ms),
             ),
         ],
       ),
