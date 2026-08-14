@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,177 +9,272 @@ part of 'call_pablo_dto.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
-CallPabloDto _$CallPabloDtoFromJson(Map<String, dynamic> json) {
-  return _CallPabloDto.fromJson(json);
-}
 
 /// @nodoc
 mixin _$CallPabloDto {
-  String get gameId => throw _privateConstructorUsedError;
-  String get playerId => throw _privateConstructorUsedError;
+
+ String get gameId; String get playerId;
+/// Create a copy of CallPabloDto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CallPabloDtoCopyWith<CallPabloDto> get copyWith => _$CallPabloDtoCopyWithImpl<CallPabloDto>(this as CallPabloDto, _$identity);
 
   /// Serializes this CallPabloDto to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of CallPabloDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $CallPabloDtoCopyWith<CallPabloDto> get copyWith =>
-      throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CallPabloDto&&(identical(other.gameId, gameId) || other.gameId == gameId)&&(identical(other.playerId, playerId) || other.playerId == playerId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gameId,playerId);
+
+@override
+String toString() {
+  return 'CallPabloDto(gameId: $gameId, playerId: $playerId)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $CallPabloDtoCopyWith<$Res> {
-  factory $CallPabloDtoCopyWith(
-    CallPabloDto value,
-    $Res Function(CallPabloDto) then,
-  ) = _$CallPabloDtoCopyWithImpl<$Res, CallPabloDto>;
-  @useResult
-  $Res call({String gameId, String playerId});
-}
+abstract mixin class $CallPabloDtoCopyWith<$Res>  {
+  factory $CallPabloDtoCopyWith(CallPabloDto value, $Res Function(CallPabloDto) _then) = _$CallPabloDtoCopyWithImpl;
+@useResult
+$Res call({
+ String gameId, String playerId
+});
 
+
+
+
+}
 /// @nodoc
-class _$CallPabloDtoCopyWithImpl<$Res, $Val extends CallPabloDto>
+class _$CallPabloDtoCopyWithImpl<$Res>
     implements $CallPabloDtoCopyWith<$Res> {
-  _$CallPabloDtoCopyWithImpl(this._value, this._then);
+  _$CallPabloDtoCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final CallPabloDto _self;
+  final $Res Function(CallPabloDto) _then;
 
-  /// Create a copy of CallPabloDto
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? gameId = null, Object? playerId = null}) {
-    return _then(
-      _value.copyWith(
-            gameId: null == gameId
-                ? _value.gameId
-                : gameId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            playerId: null == playerId
-                ? _value.playerId
-                : playerId // ignore: cast_nullable_to_non_nullable
-                      as String,
-          )
-          as $Val,
-    );
-  }
+/// Create a copy of CallPabloDto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? gameId = null,Object? playerId = null,}) {
+  return _then(_self.copyWith(
+gameId: null == gameId ? _self.gameId : gameId // ignore: cast_nullable_to_non_nullable
+as String,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
 }
 
-/// @nodoc
-abstract class _$$CallPabloDtoImplCopyWith<$Res>
-    implements $CallPabloDtoCopyWith<$Res> {
-  factory _$$CallPabloDtoImplCopyWith(
-    _$CallPabloDtoImpl value,
-    $Res Function(_$CallPabloDtoImpl) then,
-  ) = __$$CallPabloDtoImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String gameId, String playerId});
 }
 
-/// @nodoc
-class __$$CallPabloDtoImplCopyWithImpl<$Res>
-    extends _$CallPabloDtoCopyWithImpl<$Res, _$CallPabloDtoImpl>
-    implements _$$CallPabloDtoImplCopyWith<$Res> {
-  __$$CallPabloDtoImplCopyWithImpl(
-    _$CallPabloDtoImpl _value,
-    $Res Function(_$CallPabloDtoImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of CallPabloDto
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? gameId = null, Object? playerId = null}) {
-    return _then(
-      _$CallPabloDtoImpl(
-        gameId: null == gameId
-            ? _value.gameId
-            : gameId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        playerId: null == playerId
-            ? _value.playerId
-            : playerId // ignore: cast_nullable_to_non_nullable
-                  as String,
-      ),
-    );
-  }
+/// Adds pattern-matching-related methods to [CallPabloDto].
+extension CallPabloDtoPatterns on CallPabloDto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CallPabloDto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CallPabloDto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CallPabloDto value)  $default,){
+final _that = this;
+switch (_that) {
+case _CallPabloDto():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CallPabloDto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CallPabloDto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String gameId,  String playerId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CallPabloDto() when $default != null:
+return $default(_that.gameId,_that.playerId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String gameId,  String playerId)  $default,) {final _that = this;
+switch (_that) {
+case _CallPabloDto():
+return $default(_that.gameId,_that.playerId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String gameId,  String playerId)?  $default,) {final _that = this;
+switch (_that) {
+case _CallPabloDto() when $default != null:
+return $default(_that.gameId,_that.playerId);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$CallPabloDtoImpl implements _CallPabloDto {
-  const _$CallPabloDtoImpl({required this.gameId, required this.playerId});
 
-  factory _$CallPabloDtoImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CallPabloDtoImplFromJson(json);
+class _CallPabloDto implements CallPabloDto {
+  const _CallPabloDto({required this.gameId, required this.playerId});
+  factory _CallPabloDto.fromJson(Map<String, dynamic> json) => _$CallPabloDtoFromJson(json);
 
-  @override
-  final String gameId;
-  @override
-  final String playerId;
+@override final  String gameId;
+@override final  String playerId;
 
-  @override
-  String toString() {
-    return 'CallPabloDto(gameId: $gameId, playerId: $playerId)';
-  }
+/// Create a copy of CallPabloDto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CallPabloDtoCopyWith<_CallPabloDto> get copyWith => __$CallPabloDtoCopyWithImpl<_CallPabloDto>(this, _$identity);
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$CallPabloDtoImpl &&
-            (identical(other.gameId, gameId) || other.gameId == gameId) &&
-            (identical(other.playerId, playerId) ||
-                other.playerId == playerId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, gameId, playerId);
-
-  /// Create a copy of CallPabloDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CallPabloDtoImplCopyWith<_$CallPabloDtoImpl> get copyWith =>
-      __$$CallPabloDtoImplCopyWithImpl<_$CallPabloDtoImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CallPabloDtoImplToJson(this);
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$CallPabloDtoToJson(this, );
 }
 
-abstract class _CallPabloDto implements CallPabloDto {
-  const factory _CallPabloDto({
-    required final String gameId,
-    required final String playerId,
-  }) = _$CallPabloDtoImpl;
-
-  factory _CallPabloDto.fromJson(Map<String, dynamic> json) =
-      _$CallPabloDtoImpl.fromJson;
-
-  @override
-  String get gameId;
-  @override
-  String get playerId;
-
-  /// Create a copy of CallPabloDto
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CallPabloDtoImplCopyWith<_$CallPabloDtoImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CallPabloDto&&(identical(other.gameId, gameId) || other.gameId == gameId)&&(identical(other.playerId, playerId) || other.playerId == playerId));
 }
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gameId,playerId);
+
+@override
+String toString() {
+  return 'CallPabloDto(gameId: $gameId, playerId: $playerId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CallPabloDtoCopyWith<$Res> implements $CallPabloDtoCopyWith<$Res> {
+  factory _$CallPabloDtoCopyWith(_CallPabloDto value, $Res Function(_CallPabloDto) _then) = __$CallPabloDtoCopyWithImpl;
+@override @useResult
+$Res call({
+ String gameId, String playerId
+});
+
+
+
+
+}
+/// @nodoc
+class __$CallPabloDtoCopyWithImpl<$Res>
+    implements _$CallPabloDtoCopyWith<$Res> {
+  __$CallPabloDtoCopyWithImpl(this._self, this._then);
+
+  final _CallPabloDto _self;
+  final $Res Function(_CallPabloDto) _then;
+
+/// Create a copy of CallPabloDto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? gameId = null,Object? playerId = null,}) {
+  return _then(_CallPabloDto(
+gameId: null == gameId ? _self.gameId : gameId // ignore: cast_nullable_to_non_nullable
+as String,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+// dart format on
