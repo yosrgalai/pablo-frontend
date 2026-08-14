@@ -14,18 +14,18 @@ enum CardVisualState {
   /// Affichage normal, pas d'action possible dessus dans ce contexte.
   normal,
 
-  /// La carte peut être tapée (léger relief / bordure au survol-tap).
+  /// La carte peut être tapée (halo doré discret).
   selectable,
 
-  /// La carte est actuellement sélectionnée (bordure or + léger zoom).
+  /// La carte est actuellement sélectionnée (halo fort + badge ✓ + zoom).
   selected,
 
   /// La carte n'est pas interactive dans ce contexte (opacité réduite).
   disabled,
 }
 
-/// Couleurs du design system (doc 03), utilisées pour les bordures d'état
-/// et le rendu de secours (fallback) si une image est introuvable.
+/// Couleurs du design system (doc 03), utilisées pour les indicateurs
+/// d'état et le rendu de secours (fallback) si une image est introuvable.
 ///
 /// TODO(commun): à terme, centraliser ces couleurs dans
 /// `core/theme/app_theme.dart` une fois le thème global construit.
@@ -44,15 +44,16 @@ class _CardColors {
 ///
 /// Affiche des images PNG (voir [CardAssets]). Si une image est
 /// introuvable (asset manquant/mal nommé), un rendu de secours dessiné
-/// (rang + enseigne en texte) est affiché à la place — pratique en
-/// développement pour repérer immédiatement un nom de fichier incorrect
-/// sans que l'app plante ni affiche un écran blanc.
+/// (rang + enseigne en texte) est affiché à la place.
 ///
-/// NB : on utilise volontairement des PNG, pas du SVG. Le pack SVG-cards
-/// (Inkscape) référence ses dégradés AVANT leur définition dans le XML,
-/// ce que `flutter_svg` (parseur strict) ne supporte pas — voir les
-/// erreurs `Failed to find definition for #linearGradient...`. Convertir
-/// une fois en PNG évite ce problème définitivement.
+/// IMPORTANT (UX) : les indicateurs d'état (`selectable`/`selected`) sont
+/// un HALO EXTÉRIEUR + un badge, pas une simple bordure — le dos de carte
+/// généré a lui-même une bordure dorée intégrée à l'image, donc une
+/// bordure seule s'y noierait visuellement et deviendrait indiscernable.
+///
+/// NB : on utilise volontairement des PNG, pas du SVG (voir historique :
+/// le pack SVG-cards référence ses dégradés avant leur définition, ce que
+/// `flutter_svg` ne supporte pas).
 class CardWidget extends StatefulWidget {
   const CardWidget({
     super.key,
@@ -80,8 +81,6 @@ class _CardWidgetState extends State<CardWidget>
   @override
   void initState() {
     super.initState();
-    // Valeur initiale directe (pas d'animation au premier affichage) :
-    // 0 = face cachée visible, 1 = face visible.
     _flipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -92,8 +91,6 @@ class _CardWidgetState extends State<CardWidget>
   @override
   void didUpdateWidget(CardWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // On ne déclenche le flip QUE si l'état hidden a réellement changé
-    // (ex: fin de INITIAL_PEEK, révélation de fin de manche, pouvoir 8).
     if (oldWidget.card.hidden != widget.card.hidden) {
       if (widget.card.hidden) {
         _flipController.reverse();
@@ -118,44 +115,90 @@ class _CardWidgetState extends State<CardWidget>
     return GestureDetector(
       onTap: isDisabled ? null : widget.onTap,
       child: AnimatedScale(
-        scale: isSelected ? 1.05 : 1.0,
+        scale: isSelected ? 1.08 : 1.0,
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: Opacity(
-          opacity: isDisabled ? 0.5 : 1.0,
-          child: AnimatedBuilder(
-            animation: _flipController,
-            builder: (context, _) {
-              final angle = _flipController.value * math.pi;
-              final showFace = _flipController.value >= 0.5;
+          opacity: isDisabled ? 0.45 : 1.0,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(widget.width * 0.12 + 4),
+                  boxShadow: _glowShadows(isSelected, isSelectable),
+                ),
+                child: AnimatedBuilder(
+                  animation: _flipController,
+                  builder: (context, _) {
+                    final angle = _flipController.value * math.pi;
+                    final showFace = _flipController.value >= 0.5;
 
-              return Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
-                  ..rotateY(angle),
-                child: showFace
-                    ? Transform(
-                        alignment: Alignment.center,
-                        // Contre-rotation : sans elle, la face apparaît "en
-                        // miroir" au repos (angle = pi quand hidden=false).
-                        transform: Matrix4.identity()..rotateY(math.pi),
-                        child: _buildFace(isSelected: isSelected, isSelectable: isSelectable),
-                      )
-                    : _buildBack(isSelected: isSelected, isSelectable: isSelectable),
-              );
-            },
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(angle),
+                      child: showFace
+                          ? Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()..rotateY(math.pi),
+                              child: _buildFace(),
+                            )
+                          : _buildBack(),
+                    );
+                  },
+                ),
+              ),
+              if (isSelected) _buildSelectedBadge(),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBack({required bool isSelected, required bool isSelectable}) {
+  /// Halo lumineux EXTÉRIEUR à la carte — se détache toujours nettement du
+  /// fond de table, quel que soit le contenu de l'image (dos ou face).
+  List<BoxShadow> _glowShadows(bool isSelected, bool isSelectable) {
+    if (isSelected) {
+      return [
+        BoxShadow(color: _CardColors.accentGold.withOpacity(0.9), blurRadius: 14, spreadRadius: 2),
+      ];
+    }
+    if (isSelectable) {
+      return [
+        BoxShadow(color: _CardColors.accentGold.withOpacity(0.45), blurRadius: 8, spreadRadius: 0.5),
+      ];
+    }
+    return const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))];
+  }
+
+  /// Badge ✓ en haut à droite, visible uniquement quand sélectionnée —
+  /// signal sans ambiguïté possible, indépendant de tout artwork.
+  Widget _buildSelectedBadge() {
+    final size = widget.width * 0.32;
+    return Positioned(
+      top: -size * 0.3,
+      right: -size * 0.3,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: _CardColors.accentGold,
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 3)],
+        ),
+        child: Icon(Icons.check, color: Colors.black, size: size * 0.7),
+      ),
+    );
+  }
+
+  Widget _buildBack() {
     return _CardShell(
       width: widget.width,
       height: widget.height,
-      borderColor: _borderColor(isSelected, isSelectable),
       child: Image.asset(
         CardAssets.backPath,
         fit: BoxFit.cover,
@@ -164,27 +207,20 @@ class _CardWidgetState extends State<CardWidget>
     );
   }
 
-  Widget _buildFace({required bool isSelected, required bool isSelectable}) {
+  Widget _buildFace() {
     final assetPath = CardAssets.pathFor(widget.card);
 
     return _CardShell(
       width: widget.width,
       height: widget.height,
-      borderColor: _borderColor(isSelected, isSelectable),
       child: assetPath == null
-          ? _fallbackFace() // rank/suit manquant malgré hidden=false -> anomalie de données
+          ? _fallbackFace()
           : Image.asset(
               assetPath,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => _fallbackFace(),
             ),
     );
-  }
-
-  Color _borderColor(bool isSelected, bool isSelectable) {
-    if (isSelected) return _CardColors.accentGold;
-    if (isSelectable) return _CardColors.accentGold.withOpacity(0.4);
-    return Colors.black.withOpacity(0.15);
   }
 
   // --- Rendus de secours (asset manquant ou donnée incohérente) ---
@@ -234,19 +270,19 @@ class _CardWidgetState extends State<CardWidget>
   }
 }
 
-/// Coquille commune (dimensions, coins arrondis, bordure, ombre) partagée
+/// Coquille commune (dimensions, coins arrondis, ombre de base) partagée
 /// entre face et dos, pour garantir un rendu strictement identique.
+/// Ne gère plus la bordure d'état : c'est le halo (`_glowShadows`) qui
+/// porte cette information désormais.
 class _CardShell extends StatelessWidget {
   const _CardShell({
     required this.width,
     required this.height,
-    required this.borderColor,
     required this.child,
   });
 
   final double width;
   final double height;
-  final Color borderColor;
   final Widget child;
 
   @override
@@ -256,10 +292,7 @@ class _CardShell extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(width * 0.12),
-        border: Border.all(color: borderColor, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-        ],
+        border: Border.all(color: Colors.black.withOpacity(0.2), width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
