@@ -10,7 +10,7 @@ part 'choose_initial_peek_dto.g.dart';
 /// Validé côté client pour l'UX, mais la source de vérité métier reste
 /// le backend (CardService).
 @freezed
-class ChooseInitialPeekDto with _$ChooseInitialPeekDto {
+abstract class ChooseInitialPeekDto with _$ChooseInitialPeekDto {
   const factory ChooseInitialPeekDto({
     required String gameId,
     required String playerId,

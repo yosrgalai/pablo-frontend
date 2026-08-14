@@ -15,7 +15,7 @@ part 'power_target_dto.g.dart';
 /// [powerRank] doit être 7, 8 ou 9 (voir `DtoConstraints.powerRanks`).
 /// [targetPosition] / [secondTargetPosition] doivent être entre 0 et 3.
 @freezed
-class PowerTargetDto with _$PowerTargetDto {
+abstract class PowerTargetDto with _$PowerTargetDto {
   const factory PowerTargetDto({
     required String gameId,
     required String playerId,

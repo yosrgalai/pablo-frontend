@@ -15,7 +15,7 @@ part 'pair_attempt_dto.g.dart';
 /// - le joueur doit avoir encore 4 cartes en main au début de son tour
 /// - jamais disponible s'il ne lui reste que 2 ou 3 cartes
 @freezed
-class PairAttemptDto with _$PairAttemptDto {
+abstract class PairAttemptDto with _$PairAttemptDto {
   const factory PairAttemptDto({
     required String gameId,
     required String playerId,

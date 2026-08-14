@@ -6,7 +6,7 @@ part 'start_game_dto.g.dart';
 /// Miroir de `StartGameDto` (backend).
 /// [gameId] doit être un UUID valide.
 @freezed
-class StartGameDto with _$StartGameDto {
+abstract class StartGameDto with _$StartGameDto {
   const factory StartGameDto({
     required String gameId,
   }) = _StartGameDto;

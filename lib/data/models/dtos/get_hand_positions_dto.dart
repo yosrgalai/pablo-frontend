@@ -10,7 +10,7 @@ part 'get_hand_positions_dto.g.dart';
 /// String` (non nullable) : un payload sans ces champs est de toute façon
 /// invalide et rejeté par le backend.
 @freezed
-class GetHandPositionsDto with _$GetHandPositionsDto {
+abstract class GetHandPositionsDto with _$GetHandPositionsDto {
   const factory GetHandPositionsDto({
     required String gameId,
     required String playerId,

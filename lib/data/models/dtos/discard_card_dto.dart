@@ -11,7 +11,7 @@ part 'discard_card_dto.g.dart';
 /// [usePower] exprime le choix du joueur : null/absent = comportement par
 /// défaut backend (true si la carte a un pouvoir), ignoré sinon.
 @freezed
-class DiscardCardDto with _$DiscardCardDto {
+abstract class DiscardCardDto with _$DiscardCardDto {
   const factory DiscardCardDto({
     required String gameId,
     required String playerId,
