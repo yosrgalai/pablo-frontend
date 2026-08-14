@@ -11,7 +11,7 @@ part 'card_model.g.dart';
 /// uniquement sur [hidden] pour décider quoi afficher — jamais essayer
 /// de "deviner" une valeur.
 @freezed
-class CardModel with _$CardModel {
+abstract class CardModel with _$CardModel {
   const CardModel._();
 
   const factory CardModel({

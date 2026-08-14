@@ -1,75 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import 'data/models/card_model.dart';
-import 'data/models/game_round_state.dart';
-import 'data/models/player_model.dart';
-import 'data/models/round_model.dart';
-import 'features/game/widgets/game_table_layout.dart';
+import 'app.dart';
+import 'core/di/injector.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Verrouille l'app en paysage. Sans ça, un joueur qui tourne son
-  // téléphone casse tous les calculs de GameTableLayout (qui suppose
-  // width > height pour choisir ses proportions).
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // NOTE pour la binôme : ton TestApp verrouillait l'orientation en
+  // paysage dès main(). Je l'ai retiré ici car ça casserait les écrans de
+  // lobby/login (portrait, cf. maquette El Bat7a). Le verrouillage paysage
+  // doit plutôt être local à game_table_screen (initState() -> lock,
+  // dispose() -> reset). Je le laisse en commentaire pour référence :
+  //
+  // await SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.landscapeLeft,
+  //   DeviceOrientation.landscapeRight,
+  // ]);
 
-  runApp(const TestApp());
-}
+  // Racine REST du backend (routes /auth, /games...).
+  // - Web / iOS simulator : localhost fonctionne tel quel.
+  // - Émulateur Android : remplace par 10.0.2.2.
+  // - Appareil physique : IP locale de ta machine (ex: 192.168.x.x).
+  const apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000',
+  );
 
-class TestApp extends StatelessWidget {
-  const TestApp({super.key});
+  // ⚠️ Le GameGateway déclare namespace: '/game' côté serveur — le
+  // suffixe est obligatoire, sinon le socket se connecte au namespace
+  // par défaut où aucun handler n'existe.
+  const socketUrl = String.fromEnvironment(
+    'SOCKET_URL',
+    defaultValue: 'http://localhost:3000/game',
+  );
 
-  @override
-  Widget build(BuildContext context) {
-    // --- Données factices, juste pour valider le layout visuellement ---
-    // TODO: à remplacer par le vrai flux (GameBloc + socket) une fois
-    // l'étape 4 (interactions du tour) commencée.
-    final localPlayer = const PlayerModel(
-      id: 'me',
-      name: 'Moi',
-      handSize: 4,
-      isConnected: true,
-      isCurrentTurn: true,
-      hand: [
-        CardModel(id: 'c1', rank: 'K', suit: '♥', hidden: false),
-        CardModel(id: 'c2', hidden: true),
-        CardModel(id: 'c3', hidden: true),
-        CardModel(id: 'c4', rank: '7', suit: '♠', hidden: false),
-      ],
-    );
+  setupInjector(apiBaseUrl: apiBaseUrl, socketUrl: socketUrl);
 
-    final opponents = const [
-      PlayerModel(id: 'p1', name: 'Yosr', handSize: 4, isConnected: true, isCurrentTurn: false),
-      PlayerModel(id: 'p2', name: 'Ali', handSize: 3, isConnected: false, isCurrentTurn: false),
-      PlayerModel(id: 'p3', name: 'Nour', handSize: 5, isConnected: true, isCurrentTurn: false, hasCalledPablo: true),
-    ];
-
-    final round = const RoundModel(
-      roundNumber: 1,
-      drawPileCount: 38,
-      discardTop: CardModel(id: 'd1', rank: '9', suit: '♦', hidden: false),
-      state: GameRoundState.playerTurn,
-    );
-
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: const Color(0xFF0B6B4F),
-        body: SafeArea(
-          child: GameTableLayout(
-            localPlayer: localPlayer,
-            opponents: opponents,
-            round: round,
-            onDrawTap: () => debugPrint('draw tapped'),
-            onDiscardTap: () => debugPrint('discard tapped'),
-            onHandCardTap: (pos) => debugPrint('hand card $pos tapped'),
-          ),
-        ),
-      ),
-    );
-  }
+  runApp(const PabloApp());
 }
