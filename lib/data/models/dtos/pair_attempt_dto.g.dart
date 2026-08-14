@@ -6,19 +6,18 @@ part of 'pair_attempt_dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$PairAttemptDtoImpl _$$PairAttemptDtoImplFromJson(Map<String, dynamic> json) =>
-    _$PairAttemptDtoImpl(
+_PairAttemptDto _$PairAttemptDtoFromJson(Map<String, dynamic> json) =>
+    _PairAttemptDto(
       gameId: json['gameId'] as String,
       playerId: json['playerId'] as String,
       firstPosition: (json['firstPosition'] as num).toInt(),
       secondPosition: (json['secondPosition'] as num).toInt(),
     );
 
-Map<String, dynamic> _$$PairAttemptDtoImplToJson(
-  _$PairAttemptDtoImpl instance,
-) => <String, dynamic>{
-  'gameId': instance.gameId,
-  'playerId': instance.playerId,
-  'firstPosition': instance.firstPosition,
-  'secondPosition': instance.secondPosition,
-};
+Map<String, dynamic> _$PairAttemptDtoToJson(_PairAttemptDto instance) =>
+    <String, dynamic>{
+      'gameId': instance.gameId,
+      'playerId': instance.playerId,
+      'firstPosition': instance.firstPosition,
+      'secondPosition': instance.secondPosition,
+    };

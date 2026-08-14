@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,359 +9,305 @@ part of 'player_model.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
-PlayerModel _$PlayerModelFromJson(Map<String, dynamic> json) {
-  return _PlayerModel.fromJson(json);
-}
 
 /// @nodoc
 mixin _$PlayerModel {
-  String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  int get handSize => throw _privateConstructorUsedError;
-  List<CardModel> get hand => throw _privateConstructorUsedError;
-  bool get isConnected => throw _privateConstructorUsedError;
-  bool get isCurrentTurn => throw _privateConstructorUsedError;
-  bool get hasCalledPablo => throw _privateConstructorUsedError;
-  int? get roundScore => throw _privateConstructorUsedError;
-  int get totalScore => throw _privateConstructorUsedError;
+
+ String get id; String get name; bool get isHost; bool get isReady; int get handSize; List<CardModel> get hand; bool get isConnected; bool get isCurrentTurn; bool get hasCalledPablo; int? get roundScore; int get totalScore;
+/// Create a copy of PlayerModel
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlayerModelCopyWith<PlayerModel> get copyWith => _$PlayerModelCopyWithImpl<PlayerModel>(this as PlayerModel, _$identity);
 
   /// Serializes this PlayerModel to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of PlayerModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $PlayerModelCopyWith<PlayerModel> get copyWith =>
-      throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&(identical(other.isReady, isReady) || other.isReady == isReady)&&(identical(other.handSize, handSize) || other.handSize == handSize)&&const DeepCollectionEquality().equals(other.hand, hand)&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&(identical(other.isCurrentTurn, isCurrentTurn) || other.isCurrentTurn == isCurrentTurn)&&(identical(other.hasCalledPablo, hasCalledPablo) || other.hasCalledPablo == hasCalledPablo)&&(identical(other.roundScore, roundScore) || other.roundScore == roundScore)&&(identical(other.totalScore, totalScore) || other.totalScore == totalScore));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,isHost,isReady,handSize,const DeepCollectionEquality().hash(hand),isConnected,isCurrentTurn,hasCalledPablo,roundScore,totalScore);
+
+@override
+String toString() {
+  return 'PlayerModel(id: $id, name: $name, isHost: $isHost, isReady: $isReady, handSize: $handSize, hand: $hand, isConnected: $isConnected, isCurrentTurn: $isCurrentTurn, hasCalledPablo: $hasCalledPablo, roundScore: $roundScore, totalScore: $totalScore)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $PlayerModelCopyWith<$Res> {
-  factory $PlayerModelCopyWith(
-    PlayerModel value,
-    $Res Function(PlayerModel) then,
-  ) = _$PlayerModelCopyWithImpl<$Res, PlayerModel>;
-  @useResult
-  $Res call({
-    String id,
-    String name,
-    int handSize,
-    List<CardModel> hand,
-    bool isConnected,
-    bool isCurrentTurn,
-    bool hasCalledPablo,
-    int? roundScore,
-    int totalScore,
-  });
-}
+abstract mixin class $PlayerModelCopyWith<$Res>  {
+  factory $PlayerModelCopyWith(PlayerModel value, $Res Function(PlayerModel) _then) = _$PlayerModelCopyWithImpl;
+@useResult
+$Res call({
+ String id, String name, bool isHost, bool isReady, int handSize, List<CardModel> hand, bool isConnected, bool isCurrentTurn, bool hasCalledPablo, int? roundScore, int totalScore
+});
 
+
+
+
+}
 /// @nodoc
-class _$PlayerModelCopyWithImpl<$Res, $Val extends PlayerModel>
+class _$PlayerModelCopyWithImpl<$Res>
     implements $PlayerModelCopyWith<$Res> {
-  _$PlayerModelCopyWithImpl(this._value, this._then);
+  _$PlayerModelCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final PlayerModel _self;
+  final $Res Function(PlayerModel) _then;
 
-  /// Create a copy of PlayerModel
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? handSize = null,
-    Object? hand = null,
-    Object? isConnected = null,
-    Object? isCurrentTurn = null,
-    Object? hasCalledPablo = null,
-    Object? roundScore = freezed,
-    Object? totalScore = null,
-  }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            handSize: null == handSize
-                ? _value.handSize
-                : handSize // ignore: cast_nullable_to_non_nullable
-                      as int,
-            hand: null == hand
-                ? _value.hand
-                : hand // ignore: cast_nullable_to_non_nullable
-                      as List<CardModel>,
-            isConnected: null == isConnected
-                ? _value.isConnected
-                : isConnected // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            isCurrentTurn: null == isCurrentTurn
-                ? _value.isCurrentTurn
-                : isCurrentTurn // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            hasCalledPablo: null == hasCalledPablo
-                ? _value.hasCalledPablo
-                : hasCalledPablo // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            roundScore: freezed == roundScore
-                ? _value.roundScore
-                : roundScore // ignore: cast_nullable_to_non_nullable
-                      as int?,
-            totalScore: null == totalScore
-                ? _value.totalScore
-                : totalScore // ignore: cast_nullable_to_non_nullable
-                      as int,
-          )
-          as $Val,
-    );
-  }
+/// Create a copy of PlayerModel
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? isHost = null,Object? isReady = null,Object? handSize = null,Object? hand = null,Object? isConnected = null,Object? isCurrentTurn = null,Object? hasCalledPablo = null,Object? roundScore = freezed,Object? totalScore = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
+as bool,isReady: null == isReady ? _self.isReady : isReady // ignore: cast_nullable_to_non_nullable
+as bool,handSize: null == handSize ? _self.handSize : handSize // ignore: cast_nullable_to_non_nullable
+as int,hand: null == hand ? _self.hand : hand // ignore: cast_nullable_to_non_nullable
+as List<CardModel>,isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
+as bool,isCurrentTurn: null == isCurrentTurn ? _self.isCurrentTurn : isCurrentTurn // ignore: cast_nullable_to_non_nullable
+as bool,hasCalledPablo: null == hasCalledPablo ? _self.hasCalledPablo : hasCalledPablo // ignore: cast_nullable_to_non_nullable
+as bool,roundScore: freezed == roundScore ? _self.roundScore : roundScore // ignore: cast_nullable_to_non_nullable
+as int?,totalScore: null == totalScore ? _self.totalScore : totalScore // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
 }
 
-/// @nodoc
-abstract class _$$PlayerModelImplCopyWith<$Res>
-    implements $PlayerModelCopyWith<$Res> {
-  factory _$$PlayerModelImplCopyWith(
-    _$PlayerModelImpl value,
-    $Res Function(_$PlayerModelImpl) then,
-  ) = __$$PlayerModelImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({
-    String id,
-    String name,
-    int handSize,
-    List<CardModel> hand,
-    bool isConnected,
-    bool isCurrentTurn,
-    bool hasCalledPablo,
-    int? roundScore,
-    int totalScore,
-  });
 }
 
-/// @nodoc
-class __$$PlayerModelImplCopyWithImpl<$Res>
-    extends _$PlayerModelCopyWithImpl<$Res, _$PlayerModelImpl>
-    implements _$$PlayerModelImplCopyWith<$Res> {
-  __$$PlayerModelImplCopyWithImpl(
-    _$PlayerModelImpl _value,
-    $Res Function(_$PlayerModelImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of PlayerModel
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? name = null,
-    Object? handSize = null,
-    Object? hand = null,
-    Object? isConnected = null,
-    Object? isCurrentTurn = null,
-    Object? hasCalledPablo = null,
-    Object? roundScore = freezed,
-    Object? totalScore = null,
-  }) {
-    return _then(
-      _$PlayerModelImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        handSize: null == handSize
-            ? _value.handSize
-            : handSize // ignore: cast_nullable_to_non_nullable
-                  as int,
-        hand: null == hand
-            ? _value._hand
-            : hand // ignore: cast_nullable_to_non_nullable
-                  as List<CardModel>,
-        isConnected: null == isConnected
-            ? _value.isConnected
-            : isConnected // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        isCurrentTurn: null == isCurrentTurn
-            ? _value.isCurrentTurn
-            : isCurrentTurn // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        hasCalledPablo: null == hasCalledPablo
-            ? _value.hasCalledPablo
-            : hasCalledPablo // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        roundScore: freezed == roundScore
-            ? _value.roundScore
-            : roundScore // ignore: cast_nullable_to_non_nullable
-                  as int?,
-        totalScore: null == totalScore
-            ? _value.totalScore
-            : totalScore // ignore: cast_nullable_to_non_nullable
-                  as int,
-      ),
-    );
-  }
+/// Adds pattern-matching-related methods to [PlayerModel].
+extension PlayerModelPatterns on PlayerModel {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PlayerModel value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PlayerModel() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PlayerModel value)  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerModel():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PlayerModel value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerModel() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  bool isHost,  bool isReady,  int handSize,  List<CardModel> hand,  bool isConnected,  bool isCurrentTurn,  bool hasCalledPablo,  int? roundScore,  int totalScore)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PlayerModel() when $default != null:
+return $default(_that.id,_that.name,_that.isHost,_that.isReady,_that.handSize,_that.hand,_that.isConnected,_that.isCurrentTurn,_that.hasCalledPablo,_that.roundScore,_that.totalScore);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  bool isHost,  bool isReady,  int handSize,  List<CardModel> hand,  bool isConnected,  bool isCurrentTurn,  bool hasCalledPablo,  int? roundScore,  int totalScore)  $default,) {final _that = this;
+switch (_that) {
+case _PlayerModel():
+return $default(_that.id,_that.name,_that.isHost,_that.isReady,_that.handSize,_that.hand,_that.isConnected,_that.isCurrentTurn,_that.hasCalledPablo,_that.roundScore,_that.totalScore);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  bool isHost,  bool isReady,  int handSize,  List<CardModel> hand,  bool isConnected,  bool isCurrentTurn,  bool hasCalledPablo,  int? roundScore,  int totalScore)?  $default,) {final _that = this;
+switch (_that) {
+case _PlayerModel() when $default != null:
+return $default(_that.id,_that.name,_that.isHost,_that.isReady,_that.handSize,_that.hand,_that.isConnected,_that.isCurrentTurn,_that.hasCalledPablo,_that.roundScore,_that.totalScore);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$PlayerModelImpl extends _PlayerModel {
-  const _$PlayerModelImpl({
-    required this.id,
-    required this.name,
-    required this.handSize,
-    final List<CardModel> hand = const [],
-    required this.isConnected,
-    required this.isCurrentTurn,
-    this.hasCalledPablo = false,
-    this.roundScore,
-    this.totalScore = 0,
-  }) : _hand = hand,
-       super._();
 
-  factory _$PlayerModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$PlayerModelImplFromJson(json);
+class _PlayerModel extends PlayerModel {
+  const _PlayerModel({required this.id, required this.name, this.isHost = false, this.isReady = false, required this.handSize, final  List<CardModel> hand = const [], required this.isConnected, required this.isCurrentTurn, this.hasCalledPablo = false, this.roundScore, this.totalScore = 0}): _hand = hand,super._();
+  factory _PlayerModel.fromJson(Map<String, dynamic> json) => _$PlayerModelFromJson(json);
 
-  @override
-  final String id;
-  @override
-  final String name;
-  @override
-  final int handSize;
-  final List<CardModel> _hand;
-  @override
-  @JsonKey()
-  List<CardModel> get hand {
-    if (_hand is EqualUnmodifiableListView) return _hand;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_hand);
-  }
-
-  @override
-  final bool isConnected;
-  @override
-  final bool isCurrentTurn;
-  @override
-  @JsonKey()
-  final bool hasCalledPablo;
-  @override
-  final int? roundScore;
-  @override
-  @JsonKey()
-  final int totalScore;
-
-  @override
-  String toString() {
-    return 'PlayerModel(id: $id, name: $name, handSize: $handSize, hand: $hand, isConnected: $isConnected, isCurrentTurn: $isCurrentTurn, hasCalledPablo: $hasCalledPablo, roundScore: $roundScore, totalScore: $totalScore)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$PlayerModelImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.handSize, handSize) ||
-                other.handSize == handSize) &&
-            const DeepCollectionEquality().equals(other._hand, _hand) &&
-            (identical(other.isConnected, isConnected) ||
-                other.isConnected == isConnected) &&
-            (identical(other.isCurrentTurn, isCurrentTurn) ||
-                other.isCurrentTurn == isCurrentTurn) &&
-            (identical(other.hasCalledPablo, hasCalledPablo) ||
-                other.hasCalledPablo == hasCalledPablo) &&
-            (identical(other.roundScore, roundScore) ||
-                other.roundScore == roundScore) &&
-            (identical(other.totalScore, totalScore) ||
-                other.totalScore == totalScore));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    name,
-    handSize,
-    const DeepCollectionEquality().hash(_hand),
-    isConnected,
-    isCurrentTurn,
-    hasCalledPablo,
-    roundScore,
-    totalScore,
-  );
-
-  /// Create a copy of PlayerModel
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$PlayerModelImplCopyWith<_$PlayerModelImpl> get copyWith =>
-      __$$PlayerModelImplCopyWithImpl<_$PlayerModelImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$PlayerModelImplToJson(this);
-  }
+@override final  String id;
+@override final  String name;
+@override@JsonKey() final  bool isHost;
+@override@JsonKey() final  bool isReady;
+@override final  int handSize;
+ final  List<CardModel> _hand;
+@override@JsonKey() List<CardModel> get hand {
+  if (_hand is EqualUnmodifiableListView) return _hand;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_hand);
 }
 
-abstract class _PlayerModel extends PlayerModel {
-  const factory _PlayerModel({
-    required final String id,
-    required final String name,
-    required final int handSize,
-    final List<CardModel> hand,
-    required final bool isConnected,
-    required final bool isCurrentTurn,
-    final bool hasCalledPablo,
-    final int? roundScore,
-    final int totalScore,
-  }) = _$PlayerModelImpl;
-  const _PlayerModel._() : super._();
+@override final  bool isConnected;
+@override final  bool isCurrentTurn;
+@override@JsonKey() final  bool hasCalledPablo;
+@override final  int? roundScore;
+@override@JsonKey() final  int totalScore;
 
-  factory _PlayerModel.fromJson(Map<String, dynamic> json) =
-      _$PlayerModelImpl.fromJson;
+/// Create a copy of PlayerModel
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PlayerModelCopyWith<_PlayerModel> get copyWith => __$PlayerModelCopyWithImpl<_PlayerModel>(this, _$identity);
 
-  @override
-  String get id;
-  @override
-  String get name;
-  @override
-  int get handSize;
-  @override
-  List<CardModel> get hand;
-  @override
-  bool get isConnected;
-  @override
-  bool get isCurrentTurn;
-  @override
-  bool get hasCalledPablo;
-  @override
-  int? get roundScore;
-  @override
-  int get totalScore;
-
-  /// Create a copy of PlayerModel
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$PlayerModelImplCopyWith<_$PlayerModelImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+Map<String, dynamic> toJson() {
+  return _$PlayerModelToJson(this, );
 }
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.isHost, isHost) || other.isHost == isHost)&&(identical(other.isReady, isReady) || other.isReady == isReady)&&(identical(other.handSize, handSize) || other.handSize == handSize)&&const DeepCollectionEquality().equals(other._hand, _hand)&&(identical(other.isConnected, isConnected) || other.isConnected == isConnected)&&(identical(other.isCurrentTurn, isCurrentTurn) || other.isCurrentTurn == isCurrentTurn)&&(identical(other.hasCalledPablo, hasCalledPablo) || other.hasCalledPablo == hasCalledPablo)&&(identical(other.roundScore, roundScore) || other.roundScore == roundScore)&&(identical(other.totalScore, totalScore) || other.totalScore == totalScore));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,isHost,isReady,handSize,const DeepCollectionEquality().hash(_hand),isConnected,isCurrentTurn,hasCalledPablo,roundScore,totalScore);
+
+@override
+String toString() {
+  return 'PlayerModel(id: $id, name: $name, isHost: $isHost, isReady: $isReady, handSize: $handSize, hand: $hand, isConnected: $isConnected, isCurrentTurn: $isCurrentTurn, hasCalledPablo: $hasCalledPablo, roundScore: $roundScore, totalScore: $totalScore)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PlayerModelCopyWith<$Res> implements $PlayerModelCopyWith<$Res> {
+  factory _$PlayerModelCopyWith(_PlayerModel value, $Res Function(_PlayerModel) _then) = __$PlayerModelCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String name, bool isHost, bool isReady, int handSize, List<CardModel> hand, bool isConnected, bool isCurrentTurn, bool hasCalledPablo, int? roundScore, int totalScore
+});
+
+
+
+
+}
+/// @nodoc
+class __$PlayerModelCopyWithImpl<$Res>
+    implements _$PlayerModelCopyWith<$Res> {
+  __$PlayerModelCopyWithImpl(this._self, this._then);
+
+  final _PlayerModel _self;
+  final $Res Function(_PlayerModel) _then;
+
+/// Create a copy of PlayerModel
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? isHost = null,Object? isReady = null,Object? handSize = null,Object? hand = null,Object? isConnected = null,Object? isCurrentTurn = null,Object? hasCalledPablo = null,Object? roundScore = freezed,Object? totalScore = null,}) {
+  return _then(_PlayerModel(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,isHost: null == isHost ? _self.isHost : isHost // ignore: cast_nullable_to_non_nullable
+as bool,isReady: null == isReady ? _self.isReady : isReady // ignore: cast_nullable_to_non_nullable
+as bool,handSize: null == handSize ? _self.handSize : handSize // ignore: cast_nullable_to_non_nullable
+as int,hand: null == hand ? _self._hand : hand // ignore: cast_nullable_to_non_nullable
+as List<CardModel>,isConnected: null == isConnected ? _self.isConnected : isConnected // ignore: cast_nullable_to_non_nullable
+as bool,isCurrentTurn: null == isCurrentTurn ? _self.isCurrentTurn : isCurrentTurn // ignore: cast_nullable_to_non_nullable
+as bool,hasCalledPablo: null == hasCalledPablo ? _self.hasCalledPablo : hasCalledPablo // ignore: cast_nullable_to_non_nullable
+as bool,roundScore: freezed == roundScore ? _self.roundScore : roundScore // ignore: cast_nullable_to_non_nullable
+as int?,totalScore: null == totalScore ? _self.totalScore : totalScore // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+// dart format on

@@ -14,7 +14,9 @@ part 'round_model.g.dart';
 /// sur `draw_pile_widget` — le contenu réel de la pioche n'est jamais
 /// envoyé au client (règle de sécurité, doc 01 section 3).
 @freezed
-class RoundModel with _$RoundModel {
+abstract class RoundModel with _$RoundModel {
+  const RoundModel._();
+
   const factory RoundModel({
     required int roundNumber,
     required int drawPileCount,

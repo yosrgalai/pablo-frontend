@@ -12,13 +12,18 @@ part 'player_model.g.dart';
 /// (nombre de cartes) mais [hand] reste vide côté client — le plateau
 /// affiche alors [handSize] cartes face cachée via `opponent_seat_widget`,
 /// sans jamais construire de `CardModel` fictif pour combler le vide.
+///
+/// Les champs [isHost] et [isReady] sont surtout utilisés côté lobby et
+/// restent compatibles avec le flux de partie.
 @freezed
-class PlayerModel with _$PlayerModel {
+abstract class PlayerModel with _$PlayerModel {
   const PlayerModel._();
 
   const factory PlayerModel({
     required String id,
     required String name,
+    @Default(false) bool isHost,
+    @Default(false) bool isReady,
     required int handSize,
     @Default([]) List<CardModel> hand,
     required bool isConnected,

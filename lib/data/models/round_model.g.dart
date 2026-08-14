@@ -6,17 +6,16 @@ part of 'round_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$RoundModelImpl _$$RoundModelImplFromJson(Map<String, dynamic> json) =>
-    _$RoundModelImpl(
-      roundNumber: (json['roundNumber'] as num).toInt(),
-      drawPileCount: (json['drawPileCount'] as num).toInt(),
-      discardTop: json['discardTop'] == null
-          ? null
-          : CardModel.fromJson(json['discardTop'] as Map<String, dynamic>),
-      state: $enumDecode(_$GameRoundStateEnumMap, json['state']),
-    );
+_RoundModel _$RoundModelFromJson(Map<String, dynamic> json) => _RoundModel(
+  roundNumber: (json['roundNumber'] as num).toInt(),
+  drawPileCount: (json['drawPileCount'] as num).toInt(),
+  discardTop: json['discardTop'] == null
+      ? null
+      : CardModel.fromJson(json['discardTop'] as Map<String, dynamic>),
+  state: $enumDecode(_$GameRoundStateEnumMap, json['state']),
+);
 
-Map<String, dynamic> _$$RoundModelImplToJson(_$RoundModelImpl instance) =>
+Map<String, dynamic> _$RoundModelToJson(_RoundModel instance) =>
     <String, dynamic>{
       'roundNumber': instance.roundNumber,
       'drawPileCount': instance.drawPileCount,

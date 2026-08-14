@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,177 +9,272 @@ part of 'draw_card_dto.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
-
-DrawCardDto _$DrawCardDtoFromJson(Map<String, dynamic> json) {
-  return _DrawCardDto.fromJson(json);
-}
 
 /// @nodoc
 mixin _$DrawCardDto {
-  String get gameId => throw _privateConstructorUsedError;
-  String get playerId => throw _privateConstructorUsedError;
+
+ String get gameId; String get playerId;
+/// Create a copy of DrawCardDto
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DrawCardDtoCopyWith<DrawCardDto> get copyWith => _$DrawCardDtoCopyWithImpl<DrawCardDto>(this as DrawCardDto, _$identity);
 
   /// Serializes this DrawCardDto to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of DrawCardDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $DrawCardDtoCopyWith<DrawCardDto> get copyWith =>
-      throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DrawCardDto&&(identical(other.gameId, gameId) || other.gameId == gameId)&&(identical(other.playerId, playerId) || other.playerId == playerId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gameId,playerId);
+
+@override
+String toString() {
+  return 'DrawCardDto(gameId: $gameId, playerId: $playerId)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $DrawCardDtoCopyWith<$Res> {
-  factory $DrawCardDtoCopyWith(
-    DrawCardDto value,
-    $Res Function(DrawCardDto) then,
-  ) = _$DrawCardDtoCopyWithImpl<$Res, DrawCardDto>;
-  @useResult
-  $Res call({String gameId, String playerId});
-}
+abstract mixin class $DrawCardDtoCopyWith<$Res>  {
+  factory $DrawCardDtoCopyWith(DrawCardDto value, $Res Function(DrawCardDto) _then) = _$DrawCardDtoCopyWithImpl;
+@useResult
+$Res call({
+ String gameId, String playerId
+});
 
+
+
+
+}
 /// @nodoc
-class _$DrawCardDtoCopyWithImpl<$Res, $Val extends DrawCardDto>
+class _$DrawCardDtoCopyWithImpl<$Res>
     implements $DrawCardDtoCopyWith<$Res> {
-  _$DrawCardDtoCopyWithImpl(this._value, this._then);
+  _$DrawCardDtoCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final DrawCardDto _self;
+  final $Res Function(DrawCardDto) _then;
 
-  /// Create a copy of DrawCardDto
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? gameId = null, Object? playerId = null}) {
-    return _then(
-      _value.copyWith(
-            gameId: null == gameId
-                ? _value.gameId
-                : gameId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            playerId: null == playerId
-                ? _value.playerId
-                : playerId // ignore: cast_nullable_to_non_nullable
-                      as String,
-          )
-          as $Val,
-    );
-  }
+/// Create a copy of DrawCardDto
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? gameId = null,Object? playerId = null,}) {
+  return _then(_self.copyWith(
+gameId: null == gameId ? _self.gameId : gameId // ignore: cast_nullable_to_non_nullable
+as String,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
 }
 
-/// @nodoc
-abstract class _$$DrawCardDtoImplCopyWith<$Res>
-    implements $DrawCardDtoCopyWith<$Res> {
-  factory _$$DrawCardDtoImplCopyWith(
-    _$DrawCardDtoImpl value,
-    $Res Function(_$DrawCardDtoImpl) then,
-  ) = __$$DrawCardDtoImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String gameId, String playerId});
 }
 
-/// @nodoc
-class __$$DrawCardDtoImplCopyWithImpl<$Res>
-    extends _$DrawCardDtoCopyWithImpl<$Res, _$DrawCardDtoImpl>
-    implements _$$DrawCardDtoImplCopyWith<$Res> {
-  __$$DrawCardDtoImplCopyWithImpl(
-    _$DrawCardDtoImpl _value,
-    $Res Function(_$DrawCardDtoImpl) _then,
-  ) : super(_value, _then);
 
-  /// Create a copy of DrawCardDto
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({Object? gameId = null, Object? playerId = null}) {
-    return _then(
-      _$DrawCardDtoImpl(
-        gameId: null == gameId
-            ? _value.gameId
-            : gameId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        playerId: null == playerId
-            ? _value.playerId
-            : playerId // ignore: cast_nullable_to_non_nullable
-                  as String,
-      ),
-    );
-  }
+/// Adds pattern-matching-related methods to [DrawCardDto].
+extension DrawCardDtoPatterns on DrawCardDto {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DrawCardDto value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DrawCardDto() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DrawCardDto value)  $default,){
+final _that = this;
+switch (_that) {
+case _DrawCardDto():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DrawCardDto value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DrawCardDto() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String gameId,  String playerId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DrawCardDto() when $default != null:
+return $default(_that.gameId,_that.playerId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String gameId,  String playerId)  $default,) {final _that = this;
+switch (_that) {
+case _DrawCardDto():
+return $default(_that.gameId,_that.playerId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String gameId,  String playerId)?  $default,) {final _that = this;
+switch (_that) {
+case _DrawCardDto() when $default != null:
+return $default(_that.gameId,_that.playerId);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$DrawCardDtoImpl implements _DrawCardDto {
-  const _$DrawCardDtoImpl({required this.gameId, required this.playerId});
 
-  factory _$DrawCardDtoImpl.fromJson(Map<String, dynamic> json) =>
-      _$$DrawCardDtoImplFromJson(json);
+class _DrawCardDto implements DrawCardDto {
+  const _DrawCardDto({required this.gameId, required this.playerId});
+  factory _DrawCardDto.fromJson(Map<String, dynamic> json) => _$DrawCardDtoFromJson(json);
 
-  @override
-  final String gameId;
-  @override
-  final String playerId;
+@override final  String gameId;
+@override final  String playerId;
 
-  @override
-  String toString() {
-    return 'DrawCardDto(gameId: $gameId, playerId: $playerId)';
-  }
+/// Create a copy of DrawCardDto
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DrawCardDtoCopyWith<_DrawCardDto> get copyWith => __$DrawCardDtoCopyWithImpl<_DrawCardDto>(this, _$identity);
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$DrawCardDtoImpl &&
-            (identical(other.gameId, gameId) || other.gameId == gameId) &&
-            (identical(other.playerId, playerId) ||
-                other.playerId == playerId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, gameId, playerId);
-
-  /// Create a copy of DrawCardDto
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$DrawCardDtoImplCopyWith<_$DrawCardDtoImpl> get copyWith =>
-      __$$DrawCardDtoImplCopyWithImpl<_$DrawCardDtoImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$DrawCardDtoImplToJson(this);
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$DrawCardDtoToJson(this, );
 }
 
-abstract class _DrawCardDto implements DrawCardDto {
-  const factory _DrawCardDto({
-    required final String gameId,
-    required final String playerId,
-  }) = _$DrawCardDtoImpl;
-
-  factory _DrawCardDto.fromJson(Map<String, dynamic> json) =
-      _$DrawCardDtoImpl.fromJson;
-
-  @override
-  String get gameId;
-  @override
-  String get playerId;
-
-  /// Create a copy of DrawCardDto
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$DrawCardDtoImplCopyWith<_$DrawCardDtoImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DrawCardDto&&(identical(other.gameId, gameId) || other.gameId == gameId)&&(identical(other.playerId, playerId) || other.playerId == playerId));
 }
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gameId,playerId);
+
+@override
+String toString() {
+  return 'DrawCardDto(gameId: $gameId, playerId: $playerId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DrawCardDtoCopyWith<$Res> implements $DrawCardDtoCopyWith<$Res> {
+  factory _$DrawCardDtoCopyWith(_DrawCardDto value, $Res Function(_DrawCardDto) _then) = __$DrawCardDtoCopyWithImpl;
+@override @useResult
+$Res call({
+ String gameId, String playerId
+});
+
+
+
+
+}
+/// @nodoc
+class __$DrawCardDtoCopyWithImpl<$Res>
+    implements _$DrawCardDtoCopyWith<$Res> {
+  __$DrawCardDtoCopyWithImpl(this._self, this._then);
+
+  final _DrawCardDto _self;
+  final $Res Function(_DrawCardDto) _then;
+
+/// Create a copy of DrawCardDto
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? gameId = null,Object? playerId = null,}) {
+  return _then(_DrawCardDto(
+gameId: null == gameId ? _self.gameId : gameId // ignore: cast_nullable_to_non_nullable
+as String,playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+// dart format on

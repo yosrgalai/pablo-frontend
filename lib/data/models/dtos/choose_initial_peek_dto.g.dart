@@ -6,9 +6,9 @@ part of 'choose_initial_peek_dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ChooseInitialPeekDtoImpl _$$ChooseInitialPeekDtoImplFromJson(
+_ChooseInitialPeekDto _$ChooseInitialPeekDtoFromJson(
   Map<String, dynamic> json,
-) => _$ChooseInitialPeekDtoImpl(
+) => _ChooseInitialPeekDto(
   gameId: json['gameId'] as String,
   playerId: json['playerId'] as String,
   positions: (json['positions'] as List<dynamic>)
@@ -16,8 +16,8 @@ _$ChooseInitialPeekDtoImpl _$$ChooseInitialPeekDtoImplFromJson(
       .toList(),
 );
 
-Map<String, dynamic> _$$ChooseInitialPeekDtoImplToJson(
-  _$ChooseInitialPeekDtoImpl instance,
+Map<String, dynamic> _$ChooseInitialPeekDtoToJson(
+  _ChooseInitialPeekDto instance,
 ) => <String, dynamic>{
   'gameId': instance.gameId,
   'playerId': instance.playerId,
