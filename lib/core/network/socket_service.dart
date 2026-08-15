@@ -9,7 +9,6 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 ///  - emit (fire-and-forget)
 ///  - emitWithAck (attend la réponse du serveur via callback ack — utile pour
 ///    game:create / game:join qui doivent renvoyer un gameId / code)
-///  - on<T> : Stream typée pour écouter un event serveur en continu
 class SocketService {
   io.Socket? _socket;
   final _connectionController = StreamController<bool>.broadcast();

@@ -58,22 +58,22 @@ class GameTableLayout extends StatelessWidget {
 
         // --- Budget vertical : combien de hauteur pour chaque zone ---
         final opponentAreaHeight =
-            (height * (isLandscape ? 0.34 : 0.24)).clamp(80.0, 150.0);
+            (height * (isLandscape ? 0.40 : 0.28)).clamp(100.0, 190.0);
         final handAreaHeight =
             (height * (isLandscape ? 0.38 : 0.26)).clamp(90.0, 170.0);
 
         // --- Tailles dérivées de ce budget (agrandies) ---
-        final avatarSize = (opponentAreaHeight * 0.34).clamp(30.0, 50.0);
+        final avatarSize = (opponentAreaHeight * 0.32).clamp(36.0, 60.0);
         final opponentCardHeight =
-            (opponentAreaHeight * 0.55).clamp(44.0, 84.0);
+            (opponentAreaHeight * 0.58).clamp(56.0, 110.0);
         final opponentSeatWidthTop =
-            (opponentCardHeight / 1.5 * 3 + 8).clamp(60.0, 96.0);
+            (opponentCardHeight / 1.5 * 3 + 8).clamp(70.0, 120.0);
         // Côtés : le siège doit accueillir des cartes COUCHÉES (rotation
         // 90°), donc leur largeur affichée = opponentCardHeight (la
         // dimension "longue"), pas cardHeight/1.5 (dimension courte,
         // pertinente seulement pour les cartes debout d'en haut).
         final opponentSeatWidthSide =
-            (opponentCardHeight + 20).clamp(70.0, 120.0);
+            (opponentCardHeight + 20).clamp(80.0, 140.0);
 
         final handCardHeight = (handAreaHeight * 0.8).clamp(72.0, 120.0);
 

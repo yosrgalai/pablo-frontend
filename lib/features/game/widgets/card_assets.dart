@@ -4,15 +4,13 @@ import '../../../data/models/card_model.dart';
 /// chemin de l'image PNG correspondante dans `assets/images/cards/`.
 ///
 /// Convention de nommage utilisée par le pack de cartes :
-/// `{rank}_of_{suit}.png`
+/// `{rank}_of_{suit}.png` (ex. `9_of_diamonds.png`, `king_of_hearts.png`).
 ///
-/// Exemples :
-/// - `2_of_clubs.png`
-/// - `9_of_diamonds.png`
-/// - `jack_of_diamonds.png`
-/// - `king_of_hearts.png`
-/// - `7_of_spades.png`
-class CardAssets {
+/// ⚠️ Le backend réel envoie `suit` sous forme de mot anglais en
+/// majuscules (`HEARTS`, `DIAMONDS`, `CLUBS`, `SPADES`), pas les symboles
+/// (`♥ ♦ ♣ ♠`) utilisés dans la doc de jeu d'origine. On accepte les DEUX
+/// formats ci-dessous pour rester robuste si ça change encore.
+abstract class CardAssets {
   CardAssets._();
 
   static const String _basePath = 'assets/images/cards';
@@ -21,43 +19,46 @@ class CardAssets {
   static const String backPath = '$_basePath/card_back.png';
 
   /// Résout le chemin de l'image pour une carte visible.
-  ///
   /// Retourne `null` si `rank` ou `suit` est manquant.
   static String? pathFor(CardModel card) {
     if (card.rank == null) return null;
 
-    // Joker : pas d'enseigne associée.
     if (card.rank == 'JOKER') {
-      // Le backend n'envoie pas d'enseigne pour un joker, on renvoie donc
-      // par défaut la version noire.
       return '$_basePath/black_joker.png';
     }
 
     if (card.suit == null) return null;
 
-    final suitWord = _suitToWord[card.suit];
+    final suitWord = _suitToWord(card.suit!);
     final rankWord = _rankToWord[card.rank];
-
     if (suitWord == null || rankWord == null) return null;
 
-    // Convention du pack :
-    // 9_of_diamonds.png
-    // king_of_hearts.png
-    // 7_of_spades.png
     return '$_basePath/${rankWord}_of_$suitWord.png';
   }
 
-  /// Correspondance entre les symboles d'enseigne du backend
-  /// et les noms utilisés dans les fichiers.
-  static const Map<String, String> _suitToWord = {
-    '♠': 'spades',
-    '♥': 'hearts',
-    '♦': 'diamonds',
-    '♣': 'clubs',
-  };
+  /// Accepte le symbole (`♥`) OU le mot anglais, n'importe quelle casse
+  /// (`HEARTS`, `hearts`, `Hearts`).
+  static String? _suitToWord(String suit) {
+    switch (suit.toUpperCase()) {
+      case '♠':
+      case 'SPADES':
+        return 'spades';
+      case '♥':
+      case 'HEARTS':
+        return 'hearts';
+      case '♦':
+      case 'DIAMONDS':
+        return 'diamonds';
+      case '♣':
+      case 'CLUBS':
+        return 'clubs';
+      default:
+        return null;
+    }
+  }
 
-  /// Correspondance entre les rangs du backend
-  /// et les noms utilisés dans les fichiers.
+  /// Rangs texte -> mot utilisé dans le nom de fichier.
+  /// Les valeurs numériques (2 à 10) restent telles quelles.
   static const Map<String, String> _rankToWord = {
     'A': 'ace',
     '2': '2',

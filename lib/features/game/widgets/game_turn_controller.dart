@@ -103,6 +103,9 @@ class _GameTurnControllerState extends State<GameTurnController> {
   final Set<int> _peekSelection = {};
   int _peekSecondsLeft = 0;
   Timer? _peekTimer;
+  int _peekSelectionSecondsLeft = 0;
+  Timer? _peekSelectionTimeoutTimer;
+  static const _peekSelectionTimeout = Duration(seconds: 20);
 
   final Set<int> _pairSelection = {};
   _PairFeedback _pairFeedback = _PairFeedback.none;
@@ -121,11 +124,49 @@ class _GameTurnControllerState extends State<GameTurnController> {
   void initState() {
     super.initState();
     _phase = widget.needsInitialPeek ? _TurnPhase.awaitingPeekSelection : _TurnPhase.idle;
+    if (_phase == _TurnPhase.awaitingPeekSelection) {
+      _startPeekSelectionTimeout();
+    }
+  }
+
+  void _startPeekSelectionTimeout() {
+    _peekSelectionSecondsLeft = _peekSelectionTimeout.inSeconds;
+    _peekSelectionTimeoutTimer?.cancel();
+    _peekSelectionTimeoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() => _peekSelectionSecondsLeft--);
+      if (_peekSelectionSecondsLeft <= 0) {
+        timer.cancel();
+        _autoCompletePeekSelection();
+      }
+    });
+  }
+
+  /// Le joueur n'a pas choisi (ou pas fini de choisir) à temps : on
+  /// complète au hasard avec des positions restantes puis on confirme
+  /// automatiquement, pour ne jamais bloquer la partie.
+  void _autoCompletePeekSelection() {
+    final remaining = List<int>.generate(widget.localPlayer.hand.length, (i) => i)
+        .where((i) => !_peekSelection.contains(i))
+        .toList()
+      ..shuffle();
+
+    final selection = Set<int>.from(_peekSelection);
+    for (final position in remaining) {
+      if (selection.length >= 2) break;
+      selection.add(position);
+    }
+
+    setState(() => _peekSelection
+      ..clear()
+      ..addAll(selection));
+    _confirmPeekSelection();
   }
 
   @override
   void dispose() {
     _peekTimer?.cancel();
+    _peekSelectionTimeoutTimer?.cancel();
     _pairFeedbackTimer?.cancel();
     _powerTimeoutTimer?.cancel();
     super.dispose();
@@ -145,6 +186,7 @@ class _GameTurnControllerState extends State<GameTurnController> {
 
   Future<void> _confirmPeekSelection() async {
     if (_peekSelection.length != 2) return;
+    _peekSelectionTimeoutTimer?.cancel();
     final positions = _peekSelection.toList();
 
     setState(() => _phase = _TurnPhase.confirmingPeek);
@@ -497,10 +539,10 @@ class _GameTurnControllerState extends State<GameTurnController> {
   Widget _buildPeekSelectionControls() {
     final canConfirm = _peekSelection.length == 2;
     final text = _peekSelection.isEmpty
-        ? 'Choisissez 2 cartes de votre main à regarder'
+        ? 'Choisissez 2 cartes de votre main à regarder ($_peekSelectionSecondsLeft s)'
         : _peekSelection.length == 1
-            ? 'Choisissez une 2e carte'
-            : 'Prêt ? Confirmez votre choix';
+            ? 'Choisissez une 2e carte ($_peekSelectionSecondsLeft s)'
+            : 'Prêt ? Confirmez votre choix ($_peekSelectionSecondsLeft s)';
 
     return Positioned(
       left: 16,
@@ -529,14 +571,14 @@ class _GameTurnControllerState extends State<GameTurnController> {
     final isMyTurn = _isMyTurn;
     return Positioned(
       top: 12,
-      left: 0,
-      right: 0,
+      left: 60,
+      right: 60,
       child: Center(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isMyTurn ? const Color(0xFFE0B24C) : Colors.black.withOpacity(0.5),
+            color: isMyTurn ? const Color(0xFFE0B24C) : Colors.black.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -548,12 +590,16 @@ class _GameTurnControllerState extends State<GameTurnController> {
                 color: isMyTurn ? Colors.black : Colors.white70,
               ),
               const SizedBox(width: 6),
-              Text(
-                isMyTurn ? 'À vous de jouer' : "En attente des autres joueurs",
-                style: TextStyle(
-                  color: isMyTurn ? Colors.black : Colors.white70,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  isMyTurn ? 'À vous de jouer' : "En attente des autres joueurs",
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: isMyTurn ? Colors.black : Colors.white70,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -631,7 +677,7 @@ class _GameTurnControllerState extends State<GameTurnController> {
     return Positioned.fill(
       child: IgnorePointer(
         child: Container(
-          color: (isSuccess ? const Color(0xFF3FA76B) : const Color(0xFFD64545)).withOpacity(0.18),
+          color: (isSuccess ? const Color(0xFF3FA76B) : const Color(0xFFD64545)).withValues(alpha: 0.18),
           child: Center(
             child: Icon(
               isSuccess ? Icons.check_circle : Icons.cancel,
@@ -654,7 +700,7 @@ class _Banner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

@@ -40,7 +40,7 @@ class PlayerTurnScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withOpacity(0.15),
+                        color: AppColors.gold.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadii.sm),
                         border: Border.all(color: AppColors.gold),
                       ),

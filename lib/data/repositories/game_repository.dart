@@ -5,6 +5,18 @@ import '../../core/network/socket_service.dart';
 import '../models/card_model.dart';
 import '../models/player_model.dart';
 
+/// Erreur métier renvoyée par le serveur via l'event `error` en réponse à
+/// une action (ex: "Ce n'est pas votre tour"). Distincte de `TimeoutException`
+/// pour permettre à l'UI d'afficher le vrai message plutôt qu'un message
+/// générique de timeout.
+class GameActionException implements Exception {
+  GameActionException(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 /// Résumé d'une partie ouverte, retourné par GET /games/open.
 class OpenGameSummary {
   final String gameId;
@@ -47,8 +59,6 @@ class GameSnapshot {
     required this.players,
   });
 
-  /// Miroir de la réponse de POST /games (GameService.createGame) :
-  /// { gameId, scoreLimit, state, roundId, hostPlayerId, players: [{id,name}] }
   factory GameSnapshot.fromCreateResponse(Map<String, dynamic> json) {
     final rawPlayers = (json['players'] as List?) ?? const [];
     final hostPlayerId = json['hostPlayerId'] as String?;
@@ -64,7 +74,6 @@ class GameSnapshot {
     );
   }
 
-  /// Miroir de GET /games/:id (Prisma `Game` avec `include: { players: true }`).
   factory GameSnapshot.fromGetOne(Map<String, dynamic> json) {
     final rawPlayers = (json['players'] as List?) ?? const [];
     final hostPlayerId = json['hostPlayerId'] as String?;
@@ -84,6 +93,11 @@ class GameSnapshot {
 /// `PlayerModel` (Dev B, freezed) a des champs requis liés à la partie en
 /// cours (handSize, isCurrentTurn...) que le REST du lobby ne fournit pas.
 /// On les remplit avec des valeurs par défaut neutres.
+///
+/// [handSize] est forcé à 4 (pas 0) : le REST ne connaît pas vraiment la
+/// taille de main en cours, mais 0 afficherait un adversaire "sans
+/// cartes" à tort dès le début de partie — 4 est la valeur réelle au
+/// moment de la distribution initiale.
 PlayerModel _playerFromRestJson(
   Map<String, dynamic> json, {
   required String? hostPlayerId,
@@ -93,10 +107,8 @@ PlayerModel _playerFromRestJson(
     id: id,
     name: json['name'] as String? ?? '?',
     isHost: hostPlayerId != null && id == hostPlayerId,
-    // Pas de notion de "ready" côté backend — champ gardé à false, non
-    // utilisé pour l'affichage (voir isConnected à la place).
     isReady: false,
-    handSize: 0,
+    handSize: 4,
     hand: const [],
     isConnected: json['isConnected'] as bool? ?? false,
     isCurrentTurn: false,
@@ -107,13 +119,6 @@ PlayerModel _playerFromRestJson(
 
 /// Traduit les appels REST (création/jonction/liste de parties) et les
 /// events du namespace socket `/game` en objets Dart.
-///
-/// Rappel architecture (confirmé avec le backend réel) :
-/// - Créer / rejoindre une partie = REST (`POST /games`, `POST /games/:id/join`),
-///   authentifié par JWT (géré par ApiClient).
-/// - Le socket ne sert QU'à synchroniser la connexion à la room
-///   (`join_game`) et à démarrer la partie (`start_game`) — pas à devenir
-///   joueur.
 class GameRepository {
   final ApiClient _api;
   final SocketService _socket;
@@ -125,11 +130,6 @@ class GameRepository {
     return GameSnapshot.fromCreateResponse(Map<String, dynamic>.from(json));
   }
 
-  /// Rejoint via REST puis re-fetch l'état complet (POST /games/:id/join
-  /// ne renvoie que { playerId, gameId, name }, pas la liste des joueurs).
-  /// Retourne le snapshot ET le playerId local (le plus fiable — on ne
-  /// déduit jamais "qui est moi" par nom, plusieurs joueurs pouvant
-  /// partager le même displayName).
   Future<(String playerId, GameSnapshot snapshot)> joinGame({
     required String gameId,
   }) async {
@@ -151,9 +151,6 @@ class GameRepository {
         .toList();
   }
 
-  /// Émet `join_game` sur le namespace /game pour synchroniser la
-  /// connexion socket à la room. Résout quand le serveur confirme via
-  /// `game:joined` (émis au client lui-même, pas broadcast).
   Future<void> connectToRoom({
     required String gameId,
     required String playerId,
@@ -187,41 +184,28 @@ class GameRepository {
     );
   }
 
-  /// Démarre la partie (hôte uniquement — vérifié côté serveur). Aucun ack
-  /// direct : le succès se traduit par un `game:dealt` broadcasté à la
-  /// room ; l'échec (ex: pas hôte, <2 joueurs connectés) arrive via
-  /// l'event générique `error`.
   void startGame({required String gameId, required String playerId}) {
     _socket.emit('start_game', {'gameId': gameId, 'playerId': playerId});
   }
 
-  /// `game:dealt` — la partie a démarré, distribution en cours.
-  Stream<void> get onGameDealt => _socket.on('game:dealt', (_) {});
+  /// `game:dealt` — payload minimal : `{ gameId }` UNIQUEMENT (confirmé
+  /// dans game.gateway.ts : `emit(GAME_DEALT, { gameId })`). Ne contient
+  /// PAS la liste des joueurs ni le nombre de cartes en pioche — ces
+  /// infos viennent du REST (`findOne`), pas de cet event.
+  Stream<Map<String, dynamic>> get onGameDealt => _socket.on(
+        'game:dealt',
+        (payload) => Map<String, dynamic>.from(payload as Map),
+      );
 
-  /// Event générique d'erreur métier (mêmes canal pour "pas hôte",
-  /// "déconnexion d'un joueur", etc. côté backend actuel — le message
-  /// texte est la seule info disponible pour l'instant).
   Stream<String> get onError => _socket.on(
         'error',
         (payload) => (payload as Map)['message']?.toString() ?? 'Erreur inconnue.',
       );
 
-  // ---------------------------------------------------------------------
-  // Partie en cours (namespace /game) — squelette de la state machine
-  // DEALING -> INITIAL_PEEK -> PLAYER_TURN -> ... (Dev A). Les
-  // interactions détaillées d'un tour (swap/discard/paires/pouvoirs)
-  // restent gérées par le GameBloc/les widgets de Dev B.
-  // ---------------------------------------------------------------------
-
-  /// (Re)demande les 4 positions de la main locale (sans valeurs). Utile
-  /// en filet de sécurité si l'event privé auto-envoyé après le dealing a
-  /// pu être manqué (souscription pas encore active à ce moment-là).
   void requestHandPositions({required String gameId, required String playerId}) {
     _socket.emit('get_hand_positions', {'gameId': gameId, 'playerId': playerId});
   }
 
-  /// `hand:positions` — les 4 cartes de la main locale, position = index
-  /// dans la liste, valeurs cachées (rank/suit null, hidden true).
   Stream<List<CardModel>> get onHandPositionsReady => _socket.on(
         'hand:positions',
         (payload) => ((payload as Map)['cards'] as List)
@@ -241,7 +225,6 @@ class GameRepository {
     });
   }
 
-  /// `player:peeked_initial` — les 2 cartes choisies, révélées (privé).
   Stream<List<CardModel>> get onPeekedInitial => _socket.on(
         'player:peeked_initial',
         (payload) => ((payload as Map)['cards'] as List)
@@ -249,8 +232,6 @@ class GameRepository {
             .toList(),
       );
 
-  /// `turn:started` — tous les joueurs ont fait leur peek initial (ou
-  /// tour suivant en PLAYER_TURN) : renvoie le playerId dont c'est le tour.
   Stream<String> get onTurnStarted => _socket.on(
         'turn:started',
         (payload) => (payload as Map)['playerId'] as String,
@@ -260,31 +241,331 @@ class GameRepository {
     _socket.emit('call_pablo', {'gameId': gameId, 'playerId': playerId});
   }
 
-  /// `cabo:called` — un joueur (potentiellement soi-même) a annoncé Pablo.
   Stream<String> get onCaboCalled => _socket.on(
         'cabo:called',
         (payload) => (payload as Map)['playerId'] as String,
       );
 
-  /// `round:ended` — fin de manche, payload brut (contient `roundScores`,
-  /// cf. GameGateway.emitTurnAdvanced). Laissé en Map générique : le détail
-  /// fin (par carte/joueur) est affiné avec Dev B au besoin.
   Stream<Map<String, dynamic>> get onRoundEnded => _socket.on(
         'round:ended',
         (payload) => Map<String, dynamic>.from(payload as Map),
       );
 
-  /// `game:ended` — partie terminée, `{ winner: {...} }`.
   Stream<Map<String, dynamic>> get onGameEnded => _socket.on(
         'game:ended',
         (payload) => Map<String, dynamic>.from(payload as Map),
       );
 
-  /// Le JSON de carte pendant INITIAL_PEEK peut ne pas inclure rank/suit
-  /// (carte cachée) — CardModel.fromJson (json_serializable) exige les
-  /// clés du contrat ; si jamais le backend omet 'hidden' pour une carte
-  /// non révélée, on retombe sur une construction manuelle plutôt que de
-  /// planter toute la liste pour un champ manquant.
+  /// `turn:swapped_card` — broadcast à toute la room à chaque échange
+  /// (le vôtre ou celui d'un adversaire). Payload = objet `result` brut
+  /// de `cardService.swapCard()`, forme exacte non documentée — le
+  /// consommateur (`GameTableScreen`) tente plusieurs clés usuelles.
+  Stream<Map<String, dynamic>> get onCardSwapped => _socket.on(
+        'turn:swapped_card',
+        (payload) => Map<String, dynamic>.from(payload as Map),
+      );
+
+  /// `turn:discarded_card` — broadcast, DEUX formes possibles :
+  /// - défausse simple : la carte directement (`{id, rank, suit, ...}`)
+  /// - paire réussie : `{ discardedCards: [carte1, carte2] }`
+  Stream<Map<String, dynamic>> get onCardDiscarded => _socket.on(
+        'turn:discarded_card',
+        (payload) => Map<String, dynamic>.from(payload as Map),
+      );
+
+  // ---------------------------------------------------------------------
+  // Tour de jeu détaillé (Dev B) : piocher / échanger / défausser / paire
+  // / pouvoirs.
+  //
+  // Noms d'events déduits de `game.gateway.ts` (constantes ClientEvents/
+  // ServerEvents), en suivant le MÊME pattern que les 5 déjà confirmés
+  // fonctionnels (JOIN_GAME->'join_game', START_GAME->'start_game', etc.) :
+  //   ClientEvents.DRAW          -> 'draw'
+  //   ClientEvents.SWAP          -> 'swap'
+  //   ClientEvents.DISCARD       -> 'discard'
+  //   ClientEvents.ATTEMPT_PAIR  -> 'attempt_pair'   (PAS 'pair_attempt' !)
+  //   ClientEvents.POWER_TARGET  -> 'power_target'
+  //   ServerEvents.TURN_DREW_CARD      -> 'turn:drew_card'
+  //   ServerEvents.TURN_SWAPPED_CARD   -> 'turn:swapped_card'
+  //   ServerEvents.TURN_DISCARDED_CARD -> 'turn:discarded_card'
+  //   ServerEvents.POWER_ACTIVATED        -> 'power:activated'
+  //   ServerEvents.POWER_TARGET_SELECTED  -> 'power:target_selected'
+  //
+  // ⚠️ Toujours déduit par pattern, pas lu directement dans
+  // events.constants.ts — à corriger si un event ne répond toujours pas.
+  // ---------------------------------------------------------------------
+
+  /// Émet `draw`. Le serveur renvoie la carte DIRECTEMENT en payload
+  /// (`client.emit(TURN_DREW_CARD, drawnCard)`), pas encapsulée.
+  Future<CardModel> drawCard({
+    required String gameId,
+    required String playerId,
+    Duration timeout = const Duration(seconds: 8),
+  }) {
+    return _emitAndAwaitOnce<CardModel>(
+      emitEvent: 'draw',
+      emitPayload: {'gameId': gameId, 'playerId': playerId},
+      responseEvent: 'turn:drew_card',
+      timeout: timeout,
+      mapResponse: (payload) => _cardFromJson(Map<String, dynamic>.from(payload as Map)),
+    );
+  }
+
+  /// Émet `swap`. Pas de réponse directe attendue par l'appelant local —
+  /// le résultat (`turn:swapped_card`) est broadcast à toute la room.
+  void swapCard({
+    required String gameId,
+    required String playerId,
+    required String drawnCardId,
+    required int handPosition,
+  }) {
+    _socket.emit('swap', {
+      'gameId': gameId,
+      'playerId': playerId,
+      'drawnCardId': drawnCardId,
+      'handPosition': handPosition,
+    });
+  }
+
+  /// Émet `discard`. Même remarque que [swapCard] (`turn:discarded_card`
+  /// broadcast, pas de réponse directe attendue ici).
+  void discardCard({
+    required String gameId,
+    required String playerId,
+    required String drawnCardId,
+    required bool usePower,
+  }) {
+    _socket.emit('discard', {
+      'gameId': gameId,
+      'playerId': playerId,
+      'drawnCardId': drawnCardId,
+      'usePower': usePower,
+    });
+  }
+
+  /// Émet `attempt_pair`.
+  ///
+  /// ⚠️ Il N'EXISTE PAS d'event dédié "résultat de paire" côté backend
+  /// (confirmé dans `handleAttemptPair`) : le succès et l'échec empruntent
+  /// deux events DIFFÉRENTS et DÉJÀ utilisés ailleurs :
+  ///   - Succès -> `turn:discarded_card` broadcast, payload
+  ///     `{ discardedCards: [...] }` (pluriel — à distinguer du payload
+  ///     "carte unique" utilisé par une défausse normale).
+  ///   - Échec  -> `turn:drew_card` PRIVÉ au joueur, payload
+  ///     `{ penalty: true, card: {...} }` (à distinguer du payload "carte
+  ///     piochée" normal, qui n'a pas la clé `penalty`).
+  /// On écoute donc les DEUX events en parallèle et on retient celui qui
+  /// correspond au bon "shape" de payload.
+  Future<bool> pairAttempt({
+    required String gameId,
+    required String playerId,
+    required int firstPosition,
+    required int secondPosition,
+    Duration timeout = const Duration(seconds: 8),
+  }) {
+    final completer = Completer<bool>();
+    late final StreamSubscription discardSub;
+    late final StreamSubscription drewSub;
+    late final StreamSubscription errSub;
+
+    void cancelAll() {
+      discardSub.cancel();
+      drewSub.cancel();
+      errSub.cancel();
+    }
+
+    void finish(bool success) {
+      if (!completer.isCompleted) completer.complete(success);
+      cancelAll();
+    }
+
+    discardSub = _socket.on('turn:discarded_card', (payload) => payload).listen(
+      (payload) {
+        if (payload is Map && payload.containsKey('discardedCards')) {
+          finish(true);
+        }
+      },
+      onError: (Object e) {
+        if (!completer.isCompleted) completer.completeError(e);
+        cancelAll();
+      },
+    );
+
+    drewSub = _socket.on('turn:drew_card', (payload) => payload).listen(
+      (payload) {
+        if (payload is Map && payload['penalty'] == true) {
+          finish(false);
+        }
+      },
+      onError: (Object e) {
+        if (!completer.isCompleted) completer.completeError(e);
+        cancelAll();
+      },
+    );
+
+    errSub = _socket.on('error', (payload) => payload).listen((payload) {
+      if (!completer.isCompleted) {
+        final message = (payload as Map)['message']?.toString() ?? 'Erreur inconnue.';
+        completer.completeError(GameActionException(message));
+      }
+      cancelAll();
+    });
+
+    _socket.emit('attempt_pair', {
+      'gameId': gameId,
+      'playerId': playerId,
+      'firstPosition': firstPosition,
+      'secondPosition': secondPosition,
+    });
+
+    return completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        cancelAll();
+        throw TimeoutException('Pas de réponse du serveur pour "attempt_pair".');
+      },
+    );
+  }
+
+  /// Pouvoir 7 : regarder une de ses propres cartes cachées.
+  /// Payload de réponse `{ card: {...} }` (pouvoir privé, `isPrivate: true`
+  /// côté backend).
+  Future<CardModel> powerSelfPeek({
+    required String gameId,
+    required String playerId,
+    required int ownPosition,
+    Duration timeout = const Duration(seconds: 8),
+  }) {
+    return _emitAndAwaitOnce<CardModel>(
+      emitEvent: 'power_target',
+      emitPayload: {
+        'gameId': gameId,
+        'playerId': playerId,
+        'powerRank': 7,
+        'targetPlayerId': playerId,
+        'targetPosition': ownPosition,
+      },
+      responseEvent: 'power:target_selected',
+      timeout: timeout,
+      mapResponse: (payload) => _cardFromJson(
+        Map<String, dynamic>.from((payload as Map)['card'] as Map),
+      ),
+    );
+  }
+
+  /// Pouvoir 8 : espionner une carte adverse. Même format de réponse que
+  /// [powerSelfPeek] (`{ card: {...} }`, privé).
+  Future<CardModel> powerSpy({
+    required String gameId,
+    required String playerId,
+    required String opponentId,
+    required int opponentPosition,
+    Duration timeout = const Duration(seconds: 8),
+  }) {
+    return _emitAndAwaitOnce<CardModel>(
+      emitEvent: 'power_target',
+      emitPayload: {
+        'gameId': gameId,
+        'playerId': playerId,
+        'powerRank': 8,
+        'targetPlayerId': opponentId,
+        'targetPosition': opponentPosition,
+      },
+      responseEvent: 'power:target_selected',
+      timeout: timeout,
+      mapResponse: (payload) => _cardFromJson(
+        Map<String, dynamic>.from((payload as Map)['card'] as Map),
+      ),
+    );
+  }
+
+  /// Pouvoir 9 : échange aveugle. Réponse BROADCAST (`isPrivate: false`
+  /// côté backend), payload `{ swapped: {...} }` — aucune carte révélée,
+  /// on ignore le contenu, on attend juste la confirmation.
+  Future<void> powerBlindSwap({
+    required String gameId,
+    required String playerId,
+    required int ownPosition,
+    required String opponentId,
+    required int opponentPosition,
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    await _emitAndAwaitOnce<bool>(
+      emitEvent: 'power_target',
+      emitPayload: {
+        'gameId': gameId,
+        'playerId': playerId,
+        'powerRank': 9,
+        'targetPlayerId': playerId,
+        'targetPosition': ownPosition,
+        'secondTargetPlayerId': opponentId,
+        'secondTargetPosition': opponentPosition,
+      },
+      responseEvent: 'power:target_selected',
+      timeout: timeout,
+      mapResponse: (_) => true,
+    );
+  }
+
+  /// Helper générique : émet un event, attend le PREMIER event de retour
+  /// correspondant, avec timeout — ET échoue immédiatement si le serveur
+  /// répond par `error` (ex: "pas votre tour") plutôt que d'attendre les
+  /// 8 secondes du timeout pour rien.
+  Future<T> _emitAndAwaitOnce<T>({
+    required String emitEvent,
+    required Map<String, dynamic> emitPayload,
+    required String responseEvent,
+    required T Function(dynamic payload) mapResponse,
+    required Duration timeout,
+  }) {
+    final completer = Completer<T>();
+    late final StreamSubscription sub;
+    late final StreamSubscription errSub;
+
+    void cancelAll() {
+      sub.cancel();
+      errSub.cancel();
+    }
+
+    sub = _socket.on(responseEvent, (payload) => payload).listen(
+      (payload) {
+        if (!completer.isCompleted) {
+          try {
+            completer.complete(mapResponse(payload));
+          } catch (e) {
+            completer.completeError(e);
+          }
+        }
+        cancelAll();
+      },
+      onError: (Object e) {
+        if (!completer.isCompleted) completer.completeError(e);
+        cancelAll();
+      },
+    );
+
+    // `error` est émis en privé (`client.emit`) uniquement au socket
+    // responsable de la requête fautive — sûr d'écouter ici sans risquer
+    // d'intercepter l'erreur d'un autre joueur.
+    errSub = _socket.on('error', (payload) => payload).listen((payload) {
+      if (!completer.isCompleted) {
+        final message = (payload as Map)['message']?.toString() ?? 'Erreur inconnue.';
+        completer.completeError(GameActionException(message));
+      }
+      cancelAll();
+    });
+
+    _socket.emit(emitEvent, emitPayload);
+
+    return completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        cancelAll();
+        throw TimeoutException('Pas de réponse du serveur pour "$emitEvent".');
+      },
+    );
+  }
+
   CardModel _cardFromJson(Map<String, dynamic> json) {
     try {
       return CardModel.fromJson(json);

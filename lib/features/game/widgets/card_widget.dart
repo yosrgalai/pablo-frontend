@@ -164,12 +164,12 @@ class _CardWidgetState extends State<CardWidget>
   List<BoxShadow> _glowShadows(bool isSelected, bool isSelectable) {
     if (isSelected) {
       return [
-        BoxShadow(color: _CardColors.accentGold.withOpacity(0.9), blurRadius: 14, spreadRadius: 2),
+        BoxShadow(color: _CardColors.accentGold.withValues(alpha: 0.9), blurRadius: 14, spreadRadius: 2),
       ];
     }
     if (isSelectable) {
       return [
-        BoxShadow(color: _CardColors.accentGold.withOpacity(0.45), blurRadius: 8, spreadRadius: 0.5),
+        BoxShadow(color: _CardColors.accentGold.withValues(alpha: 0.45), blurRadius: 8, spreadRadius: 0.5),
       ];
     }
     return const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))];
@@ -231,7 +231,7 @@ class _CardWidgetState extends State<CardWidget>
       child: Center(
         child: Icon(
           Icons.style_outlined,
-          color: _CardColors.accentGold.withOpacity(0.6),
+          color: _CardColors.accentGold.withValues(alpha: 0.6),
           size: widget.width * 0.5,
         ),
       ),
@@ -292,7 +292,7 @@ class _CardShell extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(width * 0.12),
-        border: Border.all(color: Colors.black.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.2), width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
