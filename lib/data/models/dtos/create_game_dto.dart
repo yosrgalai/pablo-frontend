@@ -9,7 +9,7 @@ part 'create_game_dto.g.dart';
 /// - [scoreLimit] doit être 50, 100 ou 150 (voir `DtoConstraints.allowedScoreLimits`)
 /// - [playerNames] doit contenir entre 2 et 8 noms non vides
 @freezed
-class CreateGameDto with _$CreateGameDto {
+abstract class CreateGameDto with _$CreateGameDto {
   const factory CreateGameDto({
     required int scoreLimit,
     required List<String> playerNames,

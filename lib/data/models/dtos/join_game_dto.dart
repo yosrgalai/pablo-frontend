@@ -9,7 +9,7 @@ part 'join_game_dto.g.dart';
 ///
 /// [gameId] et [playerId] doivent être des UUID valides.
 @freezed
-class JoinGameDto with _$JoinGameDto {
+abstract class JoinGameDto with _$JoinGameDto {
   const factory JoinGameDto({
     required String gameId,
     required String playerId,

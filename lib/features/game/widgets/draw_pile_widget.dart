@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../data/models/card_model.dart';
 import 'card_widget.dart';
 
+/// Tag Hero partagé avec `DrawDecisionSheet` : Flutter anime automatiquement
+/// le vol de la carte entre les deux lors de l'ouverture de la feuille.
+const String drawPileHeroTag = 'draw-pile-card';
+
 /// Pioche affichée au centre de la table.
 /// Purement visuel + callback : c'est à l'appelant d'émettre `turn:draw`
 /// (via `DrawCardDto`) quand [onTap] est déclenché.
@@ -29,13 +33,16 @@ class DrawPileWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CardWidget(
-          card: const CardModel(id: 'draw_pile', hidden: true),
-          width: width,
-          height: height,
-          visualState:
-              isEmpty ? CardVisualState.disabled : CardVisualState.selectable,
-          onTap: isEmpty ? null : onTap,
+        Hero(
+          tag: drawPileHeroTag,
+          child: CardWidget(
+            card: const CardModel(id: 'draw_pile', hidden: true),
+            width: width,
+            height: height,
+            visualState:
+                isEmpty ? CardVisualState.disabled : CardVisualState.selectable,
+            onTap: isEmpty ? null : onTap,
+          ),
         ),
         const SizedBox(height: 4),
         Text('$count', style: const TextStyle(color: Colors.white70, fontSize: 12)),

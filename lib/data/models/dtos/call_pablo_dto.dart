@@ -6,7 +6,7 @@ part 'call_pablo_dto.g.dart';
 /// Miroir de `CallPabloDto` (backend) — doc §6.
 /// [gameId] et [playerId] doivent être des UUID valides.
 @freezed
-class CallPabloDto with _$CallPabloDto {
+abstract class CallPabloDto with _$CallPabloDto {
   const factory CallPabloDto({
     required String gameId,
     required String playerId,

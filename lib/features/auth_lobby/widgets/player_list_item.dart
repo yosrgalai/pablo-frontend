@@ -21,7 +21,7 @@ class PlayerListItem extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.gold.withOpacity(0.15),
+            backgroundColor: AppColors.gold.withValues(alpha: 0.15),
             child: Text(
               player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
               style: const TextStyle(
@@ -70,7 +70,7 @@ class _ConnectionBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

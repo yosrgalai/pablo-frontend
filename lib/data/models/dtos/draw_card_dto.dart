@@ -8,7 +8,7 @@ part 'draw_card_dto.g.dart';
 /// la défausse (doc §4, Option A). La reconstruction de la pioche à partir
 /// de la défausse (doc §9.1) est un mécanisme interne serveur uniquement.
 @freezed
-class DrawCardDto with _$DrawCardDto {
+abstract class DrawCardDto with _$DrawCardDto {
   const factory DrawCardDto({
     required String gameId,
     required String playerId,
