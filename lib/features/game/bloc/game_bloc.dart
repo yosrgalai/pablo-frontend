@@ -31,7 +31,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   StreamSubscription<String>? _caboCalledSub;
   StreamSubscription<Map<String, dynamic>>? _roundEndedSub;
   StreamSubscription<Map<String, dynamic>>? _gameEndedSub;
-  StreamSubscription<String>? _errorSub;
 
   GameBloc(
     this._gameRepository, {
@@ -64,9 +63,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         .listen((payload) => add(GameRoundEndedReceived(payload)));
     _gameEndedSub = _gameRepository.onGameEnded
         .listen((payload) => add(GameEndedReceived(payload)));
-    _errorSub = _gameRepository.onError
-        .listen((msg) => add(GameSocketErrorReceived(msg)));
-
+    
     // Filet de sécurité : le serveur envoie hand:positions automatiquement
     // juste après le dealing, mais si notre écoute démarre une fraction de
     // seconde trop tard on peut le manquer -> on le redemande activement.
@@ -187,7 +184,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     _caboCalledSub?.cancel();
     _roundEndedSub?.cancel();
     _gameEndedSub?.cancel();
-    _errorSub?.cancel();
     return super.close();
   }
 }

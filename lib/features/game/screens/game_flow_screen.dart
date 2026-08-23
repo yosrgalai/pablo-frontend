@@ -1,19 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/di/injector.dart';
+import '../../../data/repositories/game_repository.dart';
 import '../bloc/game_bloc.dart';
 import 'game_over_placeholder_screen.dart';
 import 'initial_peek_screen.dart';
 import 'player_turn_screen.dart';
 import 'round_scoring_placeholder_screen.dart';
 
-/// Bascule entre les écrans selon l'état du GameBloc — le squelette de
-/// navigation demandé pour Dev A. Suppose qu'un GameBloc est déjà fourni
-/// au-dessus dans l'arbre (BlocProvider) et que GameStarted a déjà été
-/// dispatché (fait à la construction du provider, cf. lobby_screen.dart).
-class GameFlowScreen extends StatelessWidget {
+class GameFlowScreen extends StatefulWidget {
   const GameFlowScreen({super.key});
+
+  @override
+  State<GameFlowScreen> createState() => _GameFlowScreenState();
+}
+
+class _GameFlowScreenState extends State<GameFlowScreen> {
+  StreamSubscription<String>? _errorSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Messages informatifs du backend (ex: "joueur X déconnecté", "pouvoir
+    // expiré") : affichés en toast, SANS jamais casser l'écran en cours —
+    // contrairement à avant où ça écrasait tout le GameState (bug corrigé).
+    _errorSub = getIt<GameRepository>().onError.listen((message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _errorSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +59,6 @@ class GameFlowScreen extends StatelessWidget {
         }
         if (state is GameOverState) {
           return GameOverPlaceholderScreen(payload: state.payload);
-        }
-        if (state is GameErrorState) {
-          return _SimpleError(message: state.message);
         }
         return const _SimpleLoading(label: 'Chargement...');
       },
@@ -59,28 +82,6 @@ class _SimpleLoading extends StatelessWidget {
             const SizedBox(height: 12),
             Text(label, style: AppTextStyles.bodySecondary),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SimpleError extends StatelessWidget {
-  final String message;
-  const _SimpleError({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            message,
-            style: AppTextStyles.body.copyWith(color: AppColors.danger),
-            textAlign: TextAlign.center,
-          ),
         ),
       ),
     );

@@ -31,7 +31,7 @@ class SocketService {
       io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
-          .setReconnectionAttempts(10)
+          .setReconnectionAttempts(30)
           .setReconnectionDelay(1000)
           .setAuth(authToken != null ? {'token': authToken} : {})
           .build(),

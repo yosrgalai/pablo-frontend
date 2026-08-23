@@ -8,6 +8,7 @@ import 'features/auth_lobby/bloc/lobby_bloc.dart';
 import 'features/auth_lobby/screens/home_screen.dart';
 import 'features/auth_lobby/screens/login_screen.dart';
 
+import 'core/widgets/connection_status_banner.dart';
 /// Racine de l'application.
 ///
 /// Fournit les Bloc/Cubit globaux (AuthCubit singleton, LobbyBloc — le
@@ -28,6 +29,7 @@ class PabloApp extends StatelessWidget {
         title: 'Pablo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
+        builder: (context, child) => ConnectionStatusBanner(child: child),
         home: const AuthGate(),
       ),
     );
