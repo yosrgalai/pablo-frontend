@@ -10,6 +10,10 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 ///  - emitWithAck (attend la réponse du serveur via callback ack — utile pour
 ///    game:create / game:join qui doivent renvoyer un gameId / code)
 class SocketService {
+  // Mémorise les paramètres de connexion pour pouvoir se reconnecter
+// après une déconnexion volontaire (bouton "Quitter la partie").
+String? _lastUrl;
+String? _lastAuthToken;
   io.Socket? _socket;
   final _connectionController = StreamController<bool>.broadcast();
 
@@ -23,6 +27,8 @@ class SocketService {
     required String url,
     String? authToken,
   }) {
+    _lastUrl = url;
+    _lastAuthToken = authToken;
     _socket?.dispose();
 
     _socket = io.io(
@@ -113,4 +119,12 @@ class SocketService {
 
     return controller.stream;
   }
+
+  /// Reconnecte avec les derniers paramètres utilisés — utile après un
+/// disconnect() volontaire (ex: bouton "Quitter la partie" en cours de
+/// jeu), pour que le socket soit de nouveau prêt en revenant au Home.
+void reconnect() {
+  if (_lastUrl == null) return;
+  connect(url: _lastUrl!, authToken: _lastAuthToken);
+}
 }

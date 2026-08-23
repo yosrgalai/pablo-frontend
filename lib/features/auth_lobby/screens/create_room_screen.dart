@@ -4,15 +4,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../bloc/lobby_bloc.dart';
 
-/// Reproduit la modale "Create New Lobby" de la maquette El Bat7a.
+/// Modale "Create New Lobby" — version simplifiée : seuls Lobby Name,
+/// Max Players (2 à 4) et Score Limit restent affichés. Les réglages
+/// Public/AFK/Vote Kick/Spectateurs ont été retirés (demande produit) —
+/// de toute façon ils n'étaient que décoratifs, `CreateGameDto` côté
+/// backend n'accepte que `scoreLimit`.
 ///
-/// ⚠️ IMPORTANT : `CreateGameDto` côté backend ne contient QUE
-/// `scoreLimit` (50/100/150). Les contrôles Max Players / Public /
-/// AFK Tolerance / Vote Kick / Allow Spectators n'ont aucun équivalent
-/// serveur actuellement (confirmé en lisant create-game.dto.ts). Ils
-/// restent affichés (cohérence visuelle avec la plateforme El Bat7a) mais
-/// sont pour l'instant purement décoratifs — à activer si/quand ces
-/// réglages sont ajoutés côté backend central ou Pablo.
+/// ⚠️ `maxPlayers` reste lui aussi décoratif pour l'instant : le backend
+/// (`GameService.joinGameAsPlayer`) plafonne actuellement à 8 joueurs en
+/// dur, pas selon la valeur choisie ici. Pour que "4 joueurs max" soit
+/// réellement appliqué, il faut changer cette limite côté backend (à
+/// faire avec ta binôme).
 class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});
 
@@ -23,20 +25,11 @@ class CreateRoomScreen extends StatefulWidget {
 class _CreateRoomScreenState extends State<CreateRoomScreen> {
   final _nameController = TextEditingController();
 
-  int _maxPlayers = 4; // décoratif, non envoyé
-  int _scoreLimit = 100; // seul champ réellement envoyé
-  bool _isPublic = true; // décoratif
-  int _afkToleranceSeconds = 300; // décoratif
-  bool _voteKick = false; // décoratif
-  bool _allowSpectators = false; // décoratif
+  int _maxPlayers = 4; // décoratif, non envoyé au backend
+  int _scoreLimit = 100;
   bool _submitting = false;
 
-  static const _afkOptions = [
-    (label: '2m', seconds: 120, icon: Icons.hourglass_bottom),
-    (label: '5m', seconds: 300, icon: Icons.timer_outlined),
-    (label: '10m', seconds: 600, icon: Icons.hourglass_top),
-  ];
-
+  static const _maxPlayersOptions = [2, 3, 4];
   static const _scoreLimitOptions = [50, 100, 150];
 
   @override
@@ -84,7 +77,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Create New Lobby',
+                          Text('Créer une partie',
                               style: AppTextStyles.body
                                   .copyWith(fontWeight: FontWeight.w700)),
                           const Text('Pablo',
@@ -99,10 +92,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  Text('Lobby Name', style: AppTextStyles.sectionLabel),
-                  const SizedBox(height: 2),
-                  Text('Décoratif pour l\'instant (pas stocké côté serveur).',
-                      style: AppTextStyles.caption),
+                  Text('Titre de la partie', style: AppTextStyles.sectionLabel),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _nameController,
@@ -115,20 +105,20 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  Text('Max Players', style: AppTextStyles.sectionLabel),
+                  Text('Nombre de joueurs max', style: AppTextStyles.sectionLabel),
                   const SizedBox(height: 8),
                   _ChipRow(
-                    values: const [2, 3, 4, 5, 6, 7, 8],
+                    values: _maxPlayersOptions,
                     selected: _maxPlayers,
                     labelBuilder: (v) => '$v',
                     onSelected: (v) => setState(() => _maxPlayers = v),
                   ),
                   const SizedBox(height: 18),
 
-                  Text('Score Limit', style: AppTextStyles.sectionLabel),
+                  Text('Score limite', style: AppTextStyles.sectionLabel),
                   const SizedBox(height: 4),
                   Text(
-                    'Fin de partie dès qu’un joueur atteint ce score.',
+                    'Fin de partie dès qu\'un joueur atteint ce score.',
                     style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: 8),
@@ -137,61 +127,6 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                     selected: _scoreLimit,
                     labelBuilder: (v) => '$v pts',
                     onSelected: (v) => setState(() => _scoreLimit = v),
-                  ),
-                  const SizedBox(height: 18),
-
-                  _ToggleRow(
-                    icon: Icons.public,
-                    title: 'Public Lobby',
-                    subtitle: _isPublic
-                        ? 'Anyone can see and join'
-                        : 'Seuls les joueurs avec le code peuvent rejoindre',
-                    value: _isPublic,
-                    onChanged: (v) => setState(() => _isPublic = v),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text('AFK Tolerance', style: AppTextStyles.sectionLabel),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: _afkOptions.map((opt) {
-                      final isSelected =
-                          _afkToleranceSeconds == opt.seconds;
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _AfkOption(
-                            label: opt.label,
-                            icon: opt.icon,
-                            selected: isSelected,
-                            onTap: () => setState(
-                                () => _afkToleranceSeconds = opt.seconds),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-
-                  _ToggleRow(
-                    icon: Icons.how_to_vote_outlined,
-                    title: 'Vote Kick',
-                    subtitle: _voteKick
-                        ? 'Les joueurs peuvent voter pour exclure'
-                        : 'Only automatic AFK quota applies',
-                    value: _voteKick,
-                    onChanged: (v) => setState(() => _voteKick = v),
-                  ),
-                  const SizedBox(height: 10),
-
-                  _ToggleRow(
-                    icon: Icons.visibility_off_outlined,
-                    title: 'Allow Spectators',
-                    subtitle: _allowSpectators
-                        ? 'Les spectateurs peuvent regarder'
-                        : 'No spectators allowed',
-                    value: _allowSpectators,
-                    onChanged: (v) => setState(() => _allowSpectators = v),
                   ),
                   const SizedBox(height: 22),
 
@@ -202,7 +137,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                           onPressed: _submitting
                               ? null
                               : () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
+                          child: const Text('Annuler'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -218,7 +153,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                                     color: Colors.black,
                                   ),
                                 )
-                              : const Text('Create Lobby'),
+                              : const Text('Créer la partie'),
                         ),
                       ),
                     ],
@@ -275,101 +210,6 @@ class _ChipRow extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-class _AfkOption extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _AfkOption({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.gold : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(AppRadii.sm),
-          border: Border.all(
-            color: selected ? AppColors.gold : AppColors.border,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon,
-                size: 16,
-                color: selected ? Colors.black : AppColors.textSecondary),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: selected ? Colors.black : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ToggleRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _ToggleRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AppColors.gold),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.body),
-                Text(subtitle, style: AppTextStyles.caption),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: AppColors.gold,
-          ),
-        ],
-      ),
     );
   }
 }

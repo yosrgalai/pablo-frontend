@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/di/injector.dart';
+import '../../../core/network/socket_service.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../data/repositories/game_repository.dart';
 import '../bloc/game_bloc.dart';
 import 'game_over_placeholder_screen.dart';
@@ -59,24 +60,90 @@ class _GameFlowScreenState extends State<GameFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GameBloc, GameState>(
-      builder: (context, state) {
-        if (state is GameDealingState) {
-          return const _SimpleLoading(label: 'Distribution des cartes...');
-        }
-        if (state is GameInitialPeekState ||
-            state is GameWaitingOthersPeekState ||
-            state is GamePlayerTurnState) {
-          return GameTableScreen(); // pas const, voir doc ci-dessus
-        }
-        if (state is GameRoundScoringState) {
-          return RoundScoringPlaceholderScreen(payload: state.payload);
-        }
-        if (state is GameOverState) {
-          return GameOverPlaceholderScreen(payload: state.payload);
-        }
-        return const _SimpleLoading(label: 'Chargement...');
-      },
+    return Stack(
+      children: [
+        BlocBuilder<GameBloc, GameState>(
+          builder: (context, state) {
+            if (state is GameDealingState) {
+              return const _SimpleLoading(label: 'Distribution des cartes...');
+            }
+            if (state is GameInitialPeekState ||
+                state is GameWaitingOthersPeekState ||
+                state is GamePlayerTurnState) {
+              return GameTableScreen(); // pas const, voir doc ci-dessus
+            }
+            if (state is GameRoundScoringState) {
+              return RoundScoringPlaceholderScreen(payload: state.payload);
+            }
+            if (state is GameOverState) {
+              return GameOverPlaceholderScreen(payload: state.payload);
+            }
+            return const _SimpleLoading(label: 'Chargement...');
+          },
+        ),
+        Positioned(
+          top: 8,
+          left: 8,
+          child: SafeArea(
+            child: _LeaveGameButton(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bouton "Quitter la partie" — toujours visible en overlay pendant la
+/// partie, quel que soit l'écran affiché en dessous (initial peek, tour,
+/// scoring...). Déconnecte réellement le socket (déclenche la vraie
+/// gestion de déconnexion côté backend, doc §9.3 — timer de 30s avant
+/// exclusion) plutôt que de juste naviguer en arrière sans le prévenir.
+class _LeaveGameButton extends StatelessWidget {
+  const _LeaveGameButton();
+
+  Future<void> _confirmAndLeave(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Quitter la partie ?'),
+        content: const Text(
+          'Tu seras déconnecté. Si tu ne reviens pas assez vite, tu seras '
+          'exclu de la partie en cours.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Quitter', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    getIt<SocketService>().disconnect();
+    getIt<SocketService>().reconnect();
+
+    if (context.mounted) {
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface.withOpacity(0.85),
+      shape: const CircleBorder(),
+      child: IconButton(
+        icon: const Icon(Icons.logout, color: AppColors.danger),
+        tooltip: 'Quitter la partie',
+        onPressed: () => _confirmAndLeave(context),
+      ),
     );
   }
 }
