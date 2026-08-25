@@ -241,6 +241,16 @@ class _GameTableScreenState extends State<GameTableScreen> {
     return success;
   }
 
+  // --- Annoncer Pablo ---
+
+  /// Passe par le `GameBloc` (pas directement par `_repository`) : c'est
+  /// lui qui écoute déjà `cabo:called` (met à jour `pabloCalled` pour
+  /// tout le monde) et `round:ended` (fait basculer `GameFlowScreen` vers
+  /// l'écran de scoring dès que la manche est réellement terminée).
+  void _handleCallPablo() {
+    _gameBloc.add(const GameCallPabloPressed());
+  }
+
   // --- Pouvoirs ---
 
   Future<CardModel> _handlePowerSelfPeek(int ownPosition) {
@@ -290,6 +300,33 @@ class _GameTableScreenState extends State<GameTableScreen> {
         gameState is GameInitialPeekState || gameState is GameWaitingOthersPeekState;
     final isMyTurn = gameState is GamePlayerTurnState && gameState.isLocalTurn;
 
+    // Annonce Pablo (doc §6) : vient de `GamePlayerTurnState.pabloCalled`,
+    // alimenté par `cabo:called`. Vrai pour TOUS les joueurs dès qu'un
+    // seul a annoncé, pas seulement pour l'auteur de l'annonce.
+    final pabloCalled = gameState is GamePlayerTurnState && gameState.pabloCalled;
+    final pabloCallerId = gameState is GamePlayerTurnState ? gameState.pabloCallerId : null;
+    final isLocalPabloCaller = pabloCallerId == _gameBloc.localPlayerId;
+
+    String? pabloAnnouncementText;
+    if (pabloCalled) {
+      if (isLocalPabloCaller) {
+        pabloAnnouncementText = 'Vous avez annoncé Pablo';
+      } else {
+        final caller = _opponents.where((o) => o.id == pabloCallerId);
+        final callerName = caller.isNotEmpty ? caller.first.name : 'Un joueur';
+        pabloAnnouncementText = '$callerName a annoncé Pablo';
+      }
+    }
+
+    // Reflète l'annonce sur le siège de l'adversaire concerné (le badge
+    // "Pablo !" existe déjà dans `OpponentSeatWidget`, il manquait juste
+    // la mise à jour dynamique de `hasCalledPablo`).
+    final displayedOpponents = pabloCalled && pabloCallerId != null
+        ? _opponents
+            .map((o) => o.id == pabloCallerId ? o.copyWith(hasCalledPablo: true) : o)
+            .toList()
+        : _opponents;
+
     final localPlayer = PlayerModel(
       id: _gameBloc.localPlayerId,
       name: 'Moi',
@@ -297,6 +334,7 @@ class _GameTableScreenState extends State<GameTableScreen> {
       isConnected: true,
       isCurrentTurn: isMyTurn,
       hand: _hand,
+      hasCalledPablo: pabloCalled && isLocalPabloCaller,
     );
 
     final round = RoundModel(
@@ -311,7 +349,7 @@ class _GameTableScreenState extends State<GameTableScreen> {
       body: SafeArea(
         child: GameTurnController(
           localPlayer: localPlayer,
-          opponents: _opponents,
+          opponents: displayedOpponents,
           round: round,
           needsInitialPeek: needsInitialPeek,
           onConfirmPeek: _handleConfirmPeek,
@@ -323,6 +361,9 @@ class _GameTableScreenState extends State<GameTableScreen> {
           onPowerSelfPeek: _handlePowerSelfPeek,
           onPowerSpy: _handlePowerSpy,
           onPowerBlindSwap: _handlePowerBlindSwap,
+          onCallPablo: _handleCallPablo,
+          pabloCalled: pabloCalled,
+          pabloAnnouncementText: pabloAnnouncementText,
         ),
       ),
     );
