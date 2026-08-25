@@ -32,7 +32,7 @@ class LobbyBloc extends Bloc<LobbyEvent, LobbyState> {
   ) async {
     emit(const LobbyConnecting());
     try {
-      final snapshot = await _gameRepository.createGame(scoreLimit: event.scoreLimit);
+      final snapshot = await _gameRepository.createGame(scoreLimit: event.scoreLimit,name: event.name,);
       final localPlayerId = snapshot.hostPlayerId ?? '';
 
       await _gameRepository.connectToRoom(

@@ -224,7 +224,7 @@ class _GameHeroCard extends StatelessWidget {
                     const Icon(Icons.people,
                         size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
-                    Text('2–8 joueurs', style: AppTextStyles.caption),
+                    Text('2–4 joueurs', style: AppTextStyles.caption),
                   ],
                 ),
               ],
@@ -296,7 +296,19 @@ class _OpenGamesSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(g.hostName, style: AppTextStyles.body),
+                    // Nom de la partie (saisi par l'hôte à la création)
+                    // en titre, nom de l'hôte en sous-texte — au lieu
+                    // d'afficher seulement le hostName comme titre avant.
+                    Text(
+                      g.name,
+                      style: AppTextStyles.body,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'par ${g.hostName}',
+                      style: AppTextStyles.caption,
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${g.playerCount}/${g.maxPlayers} joueurs · limite ${g.scoreLimit} pts',

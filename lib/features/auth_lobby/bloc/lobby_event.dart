@@ -8,9 +8,9 @@ abstract class LobbyEvent extends Equatable {
 
 class LobbyCreateRequested extends LobbyEvent {
   final int scoreLimit;
-  const LobbyCreateRequested({required this.scoreLimit});
-  @override
-  List<Object?> get props => [scoreLimit];
+   final String name;    
+const LobbyCreateRequested({required this.scoreLimit, required this.name});  @override
+  List<Object?> get props => [scoreLimit, name];
 }
 
 class LobbyJoinRequested extends LobbyEvent {

@@ -11,6 +11,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 ///    game:create / game:join qui doivent renvoyer un gameId / code)
 class SocketService {
   io.Socket? _socket;
+  String? _lastUrl;
+  String? _lastAuthToken;
   final _connectionController = StreamController<bool>.broadcast();
 
   /// Stream(true/false) de l'état de connexion, utile pour afficher un
@@ -23,6 +25,8 @@ class SocketService {
     required String url,
     String? authToken,
   }) {
+    _lastUrl = url;
+    _lastAuthToken = authToken;
     _socket?.dispose();
 
     _socket = io.io(
@@ -30,7 +34,7 @@ class SocketService {
       io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
-          .setReconnectionAttempts(10)
+          .setReconnectionAttempts(30)
           .setReconnectionDelay(1000)
           .setAuth(authToken != null ? {'token': authToken} : {})
           .build(),
@@ -113,4 +117,11 @@ class SocketService {
 
     return controller.stream;
   }
+  /// Reconnecte avec les derniers paramètres utilisés — utile après un
+/// disconnect() volontaire (ex: bouton "Quitter la partie" en cours de
+/// jeu), pour que le socket soit de nouveau prêt en revenant au Home.
+void reconnect() {
+  if (_lastUrl == null) return;
+  connect(url: _lastUrl!, authToken: _lastAuthToken);
+}
 }

@@ -20,6 +20,7 @@ class GameActionException implements Exception {
 /// Résumé d'une partie ouverte, retourné par GET /games/open.
 class OpenGameSummary {
   final String gameId;
+  final String name;  
   final int scoreLimit;
   final String hostName;
   final int playerCount;
@@ -27,6 +28,7 @@ class OpenGameSummary {
 
   OpenGameSummary({
     required this.gameId,
+    required this.name, 
     required this.scoreLimit,
     required this.hostName,
     required this.playerCount,
@@ -35,6 +37,7 @@ class OpenGameSummary {
 
   factory OpenGameSummary.fromJson(Map<String, dynamic> json) => OpenGameSummary(
         gameId: json['gameId'] as String,
+        name: json['name'] as String? ?? 'Partie sans nom',
         scoreLimit: json['scoreLimit'] as int,
         hostName: json['hostName'] as String,
         playerCount: json['playerCount'] as int,
@@ -125,8 +128,8 @@ class GameRepository {
 
   GameRepository(this._api, this._socket);
 
-  Future<GameSnapshot> createGame({required int scoreLimit}) async {
-    final json = await _api.post('/games', body: {'scoreLimit': scoreLimit});
+  Future<GameSnapshot> createGame({required int scoreLimit,required String name,  }) async {
+    final json = await _api.post('/games', body: {'scoreLimit': scoreLimit, 'name': name});
     return GameSnapshot.fromCreateResponse(Map<String, dynamic>.from(json));
   }
 
