@@ -48,6 +48,10 @@ class DrawDecisionSheet extends StatelessWidget {
               tag: drawPileHeroTag,
               child: CardWidget(card: drawnCard, width: 80, height: 120),
             ),
+            if (_isZeroValueCard(drawnCard)) ...[
+              const SizedBox(height: 14),
+              _buildZeroValueHint(),
+            ],
             const SizedBox(height: 20),
             Row(
               children: [
@@ -78,6 +82,45 @@ class DrawDecisionSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Roi rouge (♥ ♦) et Joker sont les DEUX SEULES cartes qui valent 0
+  /// point (doc §7) — pas les autres cartes rouges, qui gardent leur
+  /// valeur faciale normale. C'est le moment le plus utile pour le
+  /// signaler : le joueur vient de la piocher et doit décider quoi en
+  /// faire, contrairement au peek initial où l'info arrive trop tôt et
+  /// sans lien direct avec une décision concrète.
+  bool _isZeroValueCard(CardModel card) {
+    return card.rank == 'JOKER' || (card.rank == 'K' && card.isRedSuit == true);
+  }
+
+  Widget _buildZeroValueHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: _accentGold.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _accentGold.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star, color: _accentGold, size: 18),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              'Cette carte vaut 0 point — la meilleure valeur possible !',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       ),
     );
   }
