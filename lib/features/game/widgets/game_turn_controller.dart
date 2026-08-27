@@ -65,6 +65,10 @@ class GameTurnController extends StatefulWidget {
     required this.onCallPablo,
     required this.pabloCalled,
     this.pabloAnnouncementText,
+    this.drawPileKey,
+    this.discardPileKey,
+    this.localHandKey,
+    this.opponentSeatKeyFor,
     this.peekRevealDuration = const Duration(seconds: 5),
   });
 
@@ -110,6 +114,13 @@ class GameTurnController extends StatefulWidget {
   /// annoncé Pablo" / "Maryem a annoncé Pablo"). `null` tant qu'on ne
   /// sait pas encore qui a appelé.
   final String? pabloAnnouncementText;
+
+  /// Ancrages transmis tels quels à `GameTableLayout` pour les animations
+  /// de vol de carte (`CardFlightLayer`, possédé par `GameTableScreen`).
+  final GlobalKey? drawPileKey;
+  final GlobalKey? discardPileKey;
+  final GlobalKey? localHandKey;
+  final GlobalKey Function(String playerId)? opponentSeatKeyFor;
 
   @override
   State<GameTurnController> createState() => _GameTurnControllerState();
@@ -539,6 +550,10 @@ class _GameTurnControllerState extends State<GameTurnController> {
           onHandCardTap: handInteractive ? _handleHandCardTap : null,
           disabledHandPositions: disabledPositions,
           selectedHandPositions: selectedPositions,
+          drawPileKey: widget.drawPileKey,
+          discardPileKey: widget.discardPileKey,
+          localHandKey: widget.localHandKey,
+          opponentSeatKeyFor: widget.opponentSeatKeyFor,
         ),
 
         if (isPeekSelecting) _buildPeekSelectionControls(),

@@ -9,6 +9,7 @@ import '../../../data/models/player_model.dart';
 import '../../../data/models/round_model.dart';
 import '../../../data/repositories/game_repository.dart';
 import '../bloc/game_bloc.dart';
+import '../widgets/card_flight_layer.dart';
 import '../widgets/game_turn_controller.dart';
 
 /// Écran de plateau réel : branche `GameTurnController` sur le
@@ -32,6 +33,20 @@ class _GameTableScreenState extends State<GameTableScreen> {
   // Valeur de test en attendant qu'un event/endpoint l'expose vraiment.
   int _drawPileCount = 40;
   CardModel? _discardTop;
+
+  // --- Ancrages pour les animations de vol de carte (Point 3 UX) ---
+  final GlobalKey<CardFlightLayerState> _flightKey = GlobalKey();
+  final GlobalKey _drawPileKey = GlobalKey();
+  final GlobalKey _discardPileKey = GlobalKey();
+  final GlobalKey _localHandKey = GlobalKey();
+  final Map<String, GlobalKey> _opponentSeatKeys = {};
+
+  GlobalKey _keyForOpponent(String id) =>
+      _opponentSeatKeys.putIfAbsent(id, () => GlobalKey());
+
+  /// Clé d'ancrage "main" pour un joueur donné, adversaire ou local.
+  GlobalKey _seatKeyFor(String playerId) =>
+      playerId == _gameBloc.localPlayerId ? _localHandKey : _keyForOpponent(playerId);
 
   @override
   void initState() {
@@ -67,41 +82,167 @@ class _GameTableScreenState extends State<GameTableScreen> {
     );
   }
 
+  /// Identifie l'auteur de l'action en cours SANS dépendre d'une clé
+  /// `playerId` non confirmée dans les payloads broadcast : seul le
+  /// joueur dont c'est le tour peut piocher/échanger/défausser/utiliser
+  /// un pouvoir, donc `GamePlayerTurnState.currentPlayerId` est une
+  /// source fiable, contrairement à deviner la forme du payload.
+  String? get _currentTurnPlayerId {
+    final state = _gameBloc.state;
+    return state is GamePlayerTurnState ? state.currentPlayerId : null;
+  }
+
+  /// Corrige `handSize` d'un adversaire dans `_opponents` (chargé UNE FOIS
+  /// via REST au démarrage, jamais resynchronisé automatiquement sinon).
+  /// Sans ça, une paire réussie/ratée chez un adversaire finit par
+  /// afficher le mauvais nombre de cartes cachées sur son siège — bug
+  /// observé en jeu (5e carte de Yossr jamais visible chez Maryem).
+  void _adjustOpponentHandSize(String? playerId, int delta) {
+    if (playerId == null || playerId == _gameBloc.localPlayerId) return;
+    setState(() {
+      _opponents = _opponents.map((o) {
+        if (o.id != playerId) return o;
+        return o.copyWith(handSize: (o.handSize + delta).clamp(0, 99));
+      }).toList();
+    });
+  }
+
   void _listenToDiscardUpdates() {
     _repository.onCardSwapped.listen((payload) {
       debugPrint('[turn:swapped_card] payload reçu : $payload');
+      final actingId = _currentTurnPlayerId;
+      // Le joueur local a déjà son propre retour visuel immédiat (feuille
+      // de décision + Hero) : on ne fait voler que pour les adversaires.
+      if (actingId == null || actingId == _gameBloc.localPlayerId) return;
+
+      Map<String, dynamic>? cardJson;
       try {
-        Map<String, dynamic>? cardJson;
         if (payload.containsKey('id')) {
           cardJson = payload; // la racine EST déjà la carte
         } else {
           final nested = payload['discardedCard'] ?? payload['oldCard'] ?? payload['card'];
           if (nested is Map) cardJson = Map<String, dynamic>.from(nested);
         }
-        if (cardJson != null && mounted) {
-          setState(() => _discardTop = _cardFromRevealedJson(cardJson!));
-        }
       } catch (e) {
         debugPrint('turn:swapped_card payload inattendu, à ajuster : $payload ($e)');
       }
+      if (cardJson == null) return;
+      final revealed = _cardFromRevealedJson(cardJson);
+
+      // La carte cachée vole de la main de l'adversaire vers la
+      // défausse, et ne se retourne (révèle sa valeur) qu'à l'arrivée —
+      // jamais avant, fidèle à ce qu'un joueur peut réellement savoir.
+      _flightKey.currentState?.fly(
+        fromKey: _seatKeyFor(actingId),
+        toKey: _discardPileKey,
+        revealCard: revealed,
+        onLanded: () {
+          if (mounted) setState(() => _discardTop = revealed);
+        },
+      );
     });
 
     _repository.onCardDiscarded.listen((payload) {
       debugPrint('[turn:discarded_card] payload reçu : $payload');
-      try {
-        if (payload.containsKey('discardedCards')) {
-          final list = payload['discardedCards'] as List;
-          if (list.isNotEmpty && mounted) {
-            setState(() => _discardTop = _cardFromRevealedJson(
-                  Map<String, dynamic>.from(list.last as Map),
-                ));
+      final actingId = _currentTurnPlayerId;
+      if (actingId == null || actingId == _gameBloc.localPlayerId) return;
+
+      final isPair = payload.containsKey('discardedCards');
+
+      if (isPair) {
+        try {
+          final revealedList = (payload['discardedCards'] as List)
+              .map((e) => _cardFromRevealedJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+          if (revealedList.isEmpty) return;
+
+          // -2 cartes chez l'adversaire dès maintenant : la paire quitte
+          // sa main immédiatement, indépendamment du temps que prend le
+          // vol visuel — sinon son siège reste désynchronisé.
+          _adjustOpponentHandSize(actingId, -2);
+
+          // Les 2 cartes de la paire volent l'une après l'autre (léger
+          // décalage) depuis sa main jusqu'à la défausse.
+          for (var i = 0; i < revealedList.length; i++) {
+            final card = revealedList[i];
+            Future.delayed(Duration(milliseconds: i * 130), () {
+              if (!mounted) return;
+              _flightKey.currentState?.fly(
+                fromKey: _seatKeyFor(actingId),
+                toKey: _discardPileKey,
+                revealCard: card,
+                onLanded: () {
+                  if (mounted) setState(() => _discardTop = card);
+                },
+              );
+            });
           }
-        } else if (payload.containsKey('id') && mounted) {
-          setState(() => _discardTop = _cardFromRevealedJson(payload));
+        } catch (e) {
+          debugPrint('turn:discarded_card (paire) payload inattendu : $payload ($e)');
         }
-      } catch (e) {
-        debugPrint('turn:discarded_card payload inattendu, à ajuster : $payload ($e)');
+      } else if (payload.containsKey('id')) {
+        // Défausse directe (sans échange) : on la fait quand même voler
+        // depuis le siège du joueur (pas la pioche) — plus lisible et
+        // cohérent avec l'animation d'échange, même si techniquement la
+        // carte n'a jamais "résidé" dans sa main.
+        final revealed = _cardFromRevealedJson(payload);
+        _flightKey.currentState?.fly(
+          fromKey: _seatKeyFor(actingId),
+          toKey: _discardPileKey,
+          revealCard: revealed,
+          onLanded: () {
+            if (mounted) setState(() => _discardTop = revealed);
+          },
+        );
       }
+    });
+
+    // Pouvoir 9 (échange à l'aveugle) UNIQUEMENT : le serveur ne broadcast
+    // jamais rien ici pour les pouvoirs 7/8 (privés par design), donc
+    // tout ce qu'on reçoit sur ce flux est forcément un pouvoir 9.
+    _repository.onPowerTargetSelected.listen((payload) {
+      debugPrint('[power:target_selected] (broadcast, donc pouvoir 9) : $payload');
+      final actingId = _currentTurnPlayerId;
+      if (actingId == null || actingId == _gameBloc.localPlayerId) return;
+
+      // Forme du payload non confirmée (doc : `{ swapped: {...} }`) — on
+      // tente plusieurs clés plausibles pour identifier la cible.
+      String? targetId;
+      try {
+        final swapped = payload['swapped'];
+        final source = swapped is Map ? Map<String, dynamic>.from(swapped) : payload;
+        targetId = source['opponentId']?.toString() ??
+            source['targetPlayerId']?.toString() ??
+            source['targetId']?.toString();
+      } catch (_) {
+        targetId = null;
+      }
+
+      if (targetId != null && targetId != actingId) {
+        // Deux cartes cachées se croisent entre les deux mains — ni
+        // l'une ni l'autre ne se révèle JAMAIS : le pouvoir 9 n'expose
+        // aucune valeur, ni à l'auteur, ni à qui que ce soit d'autre.
+        _flightKey.currentState?.fly(fromKey: _seatKeyFor(actingId), toKey: _seatKeyFor(targetId));
+        _flightKey.currentState?.fly(fromKey: _seatKeyFor(targetId), toKey: _seatKeyFor(actingId));
+      } else {
+        // Cible non identifiable dans le payload (forme non confirmée) :
+        // effet de secours plutôt que rien du tout — signale "quelque
+        // chose vient de se passer ici" sans prétendre savoir où.
+        _flightKey.currentState?.fly(fromKey: _seatKeyFor(actingId), toKey: _seatKeyFor(actingId));
+      }
+    });
+
+    // Carte de pénalité (paire ratée) : elle vient de la pioche.
+    _repository.onPenaltyCardDrawn.listen((payload) {
+      debugPrint('[turn:drew_card] pénalité reçue : $payload');
+      final actingId = _currentTurnPlayerId;
+      if (actingId == null || actingId == _gameBloc.localPlayerId) return;
+
+      _flightKey.currentState?.fly(
+        fromKey: _drawPileKey,
+        toKey: _seatKeyFor(actingId),
+        onLanded: () => _adjustOpponentHandSize(actingId, 1),
+      );
     });
   }
 
@@ -347,23 +488,30 @@ class _GameTableScreenState extends State<GameTableScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0B6B4F),
       body: SafeArea(
-        child: GameTurnController(
-          localPlayer: localPlayer,
-          opponents: displayedOpponents,
-          round: round,
-          needsInitialPeek: needsInitialPeek,
-          onConfirmPeek: _handleConfirmPeek,
-          onPeekComplete: _handlePeekComplete,
-          onDrawCard: _handleDrawCard,
-          onSwapCard: _handleSwapCard,
-          onDiscardCard: _handleDiscardCard,
-          onPairAttempt: _handlePairAttempt,
-          onPowerSelfPeek: _handlePowerSelfPeek,
-          onPowerSpy: _handlePowerSpy,
-          onPowerBlindSwap: _handlePowerBlindSwap,
-          onCallPablo: _handleCallPablo,
-          pabloCalled: pabloCalled,
-          pabloAnnouncementText: pabloAnnouncementText,
+        child: CardFlightLayer(
+          key: _flightKey,
+          child: GameTurnController(
+            localPlayer: localPlayer,
+            opponents: displayedOpponents,
+            round: round,
+            needsInitialPeek: needsInitialPeek,
+            onConfirmPeek: _handleConfirmPeek,
+            onPeekComplete: _handlePeekComplete,
+            onDrawCard: _handleDrawCard,
+            onSwapCard: _handleSwapCard,
+            onDiscardCard: _handleDiscardCard,
+            onPairAttempt: _handlePairAttempt,
+            onPowerSelfPeek: _handlePowerSelfPeek,
+            onPowerSpy: _handlePowerSpy,
+            onPowerBlindSwap: _handlePowerBlindSwap,
+            onCallPablo: _handleCallPablo,
+            pabloCalled: pabloCalled,
+            pabloAnnouncementText: pabloAnnouncementText,
+            drawPileKey: _drawPileKey,
+            discardPileKey: _discardPileKey,
+            localHandKey: _localHandKey,
+            opponentSeatKeyFor: _keyForOpponent,
+          ),
         ),
       ),
     );

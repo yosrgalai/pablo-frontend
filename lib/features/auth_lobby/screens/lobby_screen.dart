@@ -26,6 +26,7 @@ class LobbyScreen extends StatelessWidget {
           curr is LobbyInitial ||
           (curr is LobbyRoomJoined && curr.transientError != null),
       listener: (context, state) {
+        debugPrint('[LobbyScreen] state reçu : $state');
         if (state is LobbyGameStarting) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(

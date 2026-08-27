@@ -30,6 +30,7 @@ class GameFlowScreen extends StatelessWidget {
       children: [
         BlocBuilder<GameBloc, GameState>(
           builder: (context, state) {
+            debugPrint('[GameFlowScreen] state reçu : $state');
             if (state is GameDealingState) {
               return const _SimpleLoading(label: 'Distribution des cartes...');
             }

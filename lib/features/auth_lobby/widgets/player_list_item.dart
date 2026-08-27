@@ -32,6 +32,7 @@ class PlayerListItem extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
+            flex: 3,
             child: Row(
               children: [
                 Flexible(
@@ -49,7 +50,11 @@ class PlayerListItem extends StatelessWidget {
               ],
             ),
           ),
-          _ConnectionBadge(isConnected: player.isConnected),
+          const SizedBox(width: 8),
+          Flexible(
+            flex: 2,
+            child: _ConnectionBadge(isConnected: player.isConnected),
+          ),
         ],
       ),
     );
@@ -59,32 +64,51 @@ class PlayerListItem extends StatelessWidget {
 /// Pas de notion "prêt" côté backend — on reflète l'état réel :
 /// isConnected passe à true uniquement une fois que le joueur a
 /// effectivement rejoint le socket de la room (join_game).
+///
+/// `LayoutBuilder` : dégrade en icône seule (sans le mot "Connecté" /
+/// "Hors ligne") si l'espace qui lui est réellement accordé est trop
+/// étroit pour tenir le texte — évite l'overflow observé quand le nom du
+/// joueur + ce badge ne tiennent plus tous les deux sur la largeur de la
+/// carte (petits écrans, ou redimensionnement de fenêtre en web).
 class _ConnectionBadge extends StatelessWidget {
   final bool isConnected;
   const _ConnectionBadge({required this.isConnected});
+
+  static const double _minWidthForLabel = 78;
 
   @override
   Widget build(BuildContext context) {
     final color = isConnected ? AppColors.success : AppColors.textDisabled;
     final label = isConnected ? 'Connecté' : 'Hors ligne';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isConnected ? Icons.wifi : Icons.wifi_off,
-            size: 13,
-            color: color,
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showLabel = constraints.maxWidth >= _minWidthForLabel;
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: showLabel ? 10 : 6,
+            vertical: 5,
           ),
-          const SizedBox(width: 5),
-          Text(label, style: AppTextStyles.caption.copyWith(color: color)),
-        ],
-      ),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isConnected ? Icons.wifi : Icons.wifi_off,
+                size: 13,
+                color: color,
+              ),
+              if (showLabel) ...[
+                const SizedBox(width: 5),
+                Text(label, style: AppTextStyles.caption.copyWith(color: color)),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
