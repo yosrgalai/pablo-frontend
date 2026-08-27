@@ -276,6 +276,42 @@ class GameRepository {
         (payload) => Map<String, dynamic>.from(payload as Map),
       );
 
+  /// `power:target_selected` — normalement PRIVÉ (`isPrivate: true`) pour
+  /// les pouvoirs 7 et 8 : le serveur n'envoie ce résultat qu'au client
+  /// auteur, jamais aux autres. Broadcast en revanche pour le pouvoir 9
+  /// (`isPrivate: false`, cf. doc de [powerBlindSwap] plus bas), payload
+  /// `{ swapped: {...} }` sans révéler aucune carte.
+  ///
+  /// Ce flux permet aux AUTRES joueurs de détecter qu'un pouvoir 9 vient
+  /// d'être joué (pour l'afficher dans l'UI). Pour les pouvoirs 7/8, ce
+  /// stream ne recevra simplement rien chez un autre client que l'auteur
+  /// — c'est le comportement de confidentialité voulu, pas un bug.
+  ///
+  /// ⚠️ Distinct de l'appel ponctuel fait en interne par [powerSelfPeek] /
+  /// [powerSpy] / [powerBlindSwap] (`_emitAndAwaitOnce`) : les deux
+  /// écoutent le même event socket — Socket.IO autorise plusieurs
+  /// listeners simultanés dessus, aucun conflit entre eux.
+  Stream<Map<String, dynamic>> get onPowerTargetSelected => _socket.on(
+        'power:target_selected',
+        (payload) => Map<String, dynamic>.from(payload as Map),
+      );
+
+  /// `turn:drew_card` filtré sur `{ penalty: true }` : carte de pénalité
+  /// ajoutée après un `attempt_pair` raté (doc §5). Contrairement à un
+  /// tirage normal (privé, révèle une valeur de carte), cette carte de
+  /// pénalité ne révèle RIEN — elle peut donc raisonnablement être
+  /// broadcast à toute la room. ⚠️ À confirmer côté backend : si ce n'est
+  /// PAS broadcast aujourd'hui, ce flux ne recevra simplement rien chez
+  /// les autres clients, et `handSize` des adversaires restera désynchro
+  /// après une pénalité (cf. bug observé en jeu).
+  ///
+  /// Flux séparé de l'écoute interne faite par [pairAttempt] pour son
+  /// propre completer : les deux écoutent le même event socket, sans
+  /// conflit (Socket.IO supporte plusieurs listeners simultanés).
+  Stream<Map<String, dynamic>> get onPenaltyCardDrawn => _socket
+      .on('turn:drew_card', (payload) => Map<String, dynamic>.from(payload as Map))
+      .where((payload) => payload['penalty'] == true);
+
   // ---------------------------------------------------------------------
   // Tour de jeu détaillé (Dev B) : piocher / échanger / défausser / paire
   // / pouvoirs.

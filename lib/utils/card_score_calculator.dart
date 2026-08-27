@@ -1,4 +1,3 @@
-// TODO: card_score_calculator.dart
 import '../data/models/card_model.dart';
 
 /// Calcul de la valeur d'une carte / du score d'une main, purement pour

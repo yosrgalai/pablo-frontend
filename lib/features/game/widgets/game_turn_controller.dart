@@ -7,6 +7,7 @@ import '../../../data/models/player_model.dart';
 import '../../../data/models/round_model.dart';
 import 'draw_decision_sheet.dart';
 import 'game_table_layout.dart';
+import 'pablo_button.dart';
 import 'power_target_dialogs.dart';
 
 enum _TurnPhase {
@@ -61,6 +62,13 @@ class GameTurnController extends StatefulWidget {
     required this.onPowerSelfPeek,
     required this.onPowerSpy,
     required this.onPowerBlindSwap,
+    required this.onCallPablo,
+    required this.pabloCalled,
+    this.pabloAnnouncementText,
+    this.drawPileKey,
+    this.discardPileKey,
+    this.localHandKey,
+    this.opponentSeatKeyFor,
     this.peekRevealDuration = const Duration(seconds: 5),
   });
 
@@ -91,6 +99,29 @@ class GameTurnController extends StatefulWidget {
   final Future<void> Function(int ownPosition, String opponentId, int opponentPosition)
       onPowerBlindSwap;
 
+  /// Émet `call_pablo` (doc §6) : remplace le tour normal, uniquement
+  /// possible AVANT de piocher. Termine la manche immédiatement — il n'y
+  /// a PAS de "dernier tour" pour les autres joueurs.
+  final VoidCallback onCallPablo;
+
+  /// `true` dès que le serveur a confirmé l'annonce (`cabo:called`,
+  /// reflété dans `GamePlayerTurnState.pabloCalled`) — pour n'importe quel
+  /// joueur, soi-même ou un adversaire. Bloque toute interaction : la
+  /// manche est en train de se terminer, les scores vont être calculés.
+  final bool pabloCalled;
+
+  /// Phrase déjà conjuguée à afficher pendant l'attente ("Vous avez
+  /// annoncé Pablo" / "Maryem a annoncé Pablo"). `null` tant qu'on ne
+  /// sait pas encore qui a appelé.
+  final String? pabloAnnouncementText;
+
+  /// Ancrages transmis tels quels à `GameTableLayout` pour les animations
+  /// de vol de carte (`CardFlightLayer`, possédé par `GameTableScreen`).
+  final GlobalKey? drawPileKey;
+  final GlobalKey? discardPileKey;
+  final GlobalKey? localHandKey;
+  final GlobalKey Function(String playerId)? opponentSeatKeyFor;
+
   @override
   State<GameTurnController> createState() => _GameTurnControllerState();
 }
@@ -117,8 +148,23 @@ class _GameTurnControllerState extends State<GameTurnController> {
 
   Timer? _powerTimeoutTimer;
 
+  /// `true` dès que LE JOUEUR LOCAL a tapé + confirmé "Annoncer Pablo",
+  /// avant même que le serveur ait répondu — évite un aller-retour réseau
+  /// pendant lequel le bouton resterait cliquable une seconde fois.
+  bool _pabloCallSubmitted = false;
+
   bool get _isMyTurn => widget.localPlayer.isCurrentTurn;
   bool get _canAttemptPair => widget.localPlayer.hand.length >= 4;
+
+  /// Vrai dès qu'une annonce Pablo est en cours (localement optimiste OU
+  /// confirmée par le serveur, pour n'importe quel joueur) : plus aucune
+  /// action de jeu n'est possible, on attend juste le calcul des scores.
+  bool get _pabloInProgress => widget.pabloCalled || _pabloCallSubmitted;
+
+  void _handleCallPablo() {
+    setState(() => _pabloCallSubmitted = true);
+    widget.onCallPablo();
+  }
 
   @override
   void initState() {
@@ -483,11 +529,12 @@ class _GameTurnControllerState extends State<GameTurnController> {
     final isPower7 = _phase == _TurnPhase.awaitingPower7Target;
     final isPower9Source = _phase == _TurnPhase.awaitingPower9Source;
 
-    final handInteractive =
-        isPeekSelecting || isSwapMode || isPairMode || isPower7 || isPower9Source;
-    final drawInteractive = _isMyTurn && _phase == _TurnPhase.idle && !_isDrawing;
+    final handInteractive = !_pabloInProgress &&
+        (isPeekSelecting || isSwapMode || isPairMode || isPower7 || isPower9Source);
+    final drawInteractive =
+        _isMyTurn && _phase == _TurnPhase.idle && !_isDrawing && !_pabloInProgress;
 
-    final disabledPositions = (!_isMyTurn && _phase == _TurnPhase.idle)
+    final disabledPositions = ((!_isMyTurn && _phase == _TurnPhase.idle) || _pabloInProgress)
         ? Set<int>.from(List.generate(widget.localPlayer.hand.length, (i) => i))
         : <int>{};
 
@@ -503,6 +550,10 @@ class _GameTurnControllerState extends State<GameTurnController> {
           onHandCardTap: handInteractive ? _handleHandCardTap : null,
           disabledHandPositions: disabledPositions,
           selectedHandPositions: selectedPositions,
+          drawPileKey: widget.drawPileKey,
+          discardPileKey: widget.discardPileKey,
+          localHandKey: widget.localHandKey,
+          opponentSeatKeyFor: widget.opponentSeatKeyFor,
         ),
 
         if (isPeekSelecting) _buildPeekSelectionControls(),
@@ -513,8 +564,14 @@ class _GameTurnControllerState extends State<GameTurnController> {
 
         if (isPairMode) _buildPairControls(),
 
-        if (_isMyTurn && _phase == _TurnPhase.idle && _canAttemptPair && !_isDrawing)
+        if (_isMyTurn && _phase == _TurnPhase.idle && _canAttemptPair && !_isDrawing && !_pabloInProgress)
           _buildPairEntryButton(),
+
+        // "Annoncer Pablo" remplace le tour normal (doc §6) : uniquement
+        // avant de piocher, donc phase idle exclusivement — jamais après
+        // avoir pioché une carte.
+        if (_isMyTurn && _phase == _TurnPhase.idle && !_isDrawing && !_pabloInProgress)
+          _buildPabloEntryButton(),
 
         if (_isDrawing || isSubmittingPair || isPeekConfirming) const _LoadingOverlay(),
 
@@ -522,7 +579,11 @@ class _GameTurnControllerState extends State<GameTurnController> {
 
         // Statut de tour : toujours visible, pour qu'on sache en un coup
         // d'œil si on peut agir ou si on attend les autres joueurs.
-        if (_phase == _TurnPhase.idle) _buildTurnStatusBanner(),
+        if (_phase == _TurnPhase.idle && !_pabloInProgress) _buildTurnStatusBanner(),
+
+        // Manche en train de se terminer : plus aucune action possible
+        // pour personne, on attend le calcul des scores (round:ended).
+        if (_pabloInProgress) _buildPabloOverlay(),
       ],
     );
   }
@@ -599,6 +660,56 @@ class _GameTurnControllerState extends State<GameTurnController> {
                     color: isMyTurn ? Colors.black : Colors.white70,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPabloEntryButton() {
+    return Positioned(
+      left: 16,
+      bottom: 110,
+      child: PabloButton(onPressed: _handleCallPablo),
+    );
+  }
+
+  /// Bloque visuellement tout le plateau dès qu'une annonce Pablo est en
+  /// cours (locale ou reçue du serveur) : la manche se termine tout de
+  /// suite, personne — pas même l'auteur de l'annonce — ne rejoue.
+  /// `game_flow_screen.dart` bascule automatiquement vers l'écran de
+  /// scoring dès que `round:ended` arrive ; cet overlay ne couvre que le
+  /// court instant d'attente réseau entre les deux.
+  Widget _buildPabloOverlay() {
+    final text = widget.pabloAnnouncementText ??
+        (_pabloCallSubmitted ? 'Vous avez annoncé Pablo' : 'Pablo annoncé');
+
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.55),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFFE0B24C)),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$text — calcul des scores...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),

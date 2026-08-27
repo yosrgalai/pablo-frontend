@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../data/models/player_model.dart';
@@ -24,6 +25,21 @@ class LobbyBloc extends Bloc<LobbyEvent, LobbyState> {
     on<LobbyGameDealtReceived>(_onGameDealtReceived);
     on<LobbySocketErrorReceived>(_onSocketErrorReceived);
     on<LobbyPollRequested>(_onPollRequested);
+  }
+
+  /// TEMPORAIRE (diagnostic) : trace chaque event reçu par ce bloc, dans
+  /// l'ordre exact où ils arrivent — à retirer une fois le bug identifié.
+  @override
+  void onEvent(LobbyEvent event) {
+    super.onEvent(event);
+    debugPrint('[LobbyBloc] event reçu : $event');
+  }
+
+  /// TEMPORAIRE (diagnostic) : trace chaque transition d'état.
+  @override
+  void onTransition(Transition<LobbyEvent, LobbyState> transition) {
+    super.onTransition(transition);
+    debugPrint('[LobbyBloc] transition : ${transition.currentState} -> ${transition.nextState}');
   }
 
   Future<void> _onCreateRequested(
@@ -87,12 +103,19 @@ class LobbyBloc extends Bloc<LobbyEvent, LobbyState> {
     Emitter<LobbyState> emit,
   ) {
     final current = state;
-    if (current is LobbyRoomJoined && current.isHost) {
-      _gameRepository.startGame(
-        gameId: current.gameId,
-        playerId: current.localPlayerId,
-      );
-    }
+    if (current is! LobbyRoomJoined || !current.isHost) return;
+
+    // `startGame()` est un "tire et oublie" (`socket.emit`, sans ack) :
+    // il n'y a rien à await ni à catch ici. Si le serveur refuse la
+    // demande, ça doit remonter via l'event `error` générique
+    // (`onError`, déjà écouté par `_onSocketErrorReceived` ci-dessous) —
+    // PAS via cet appel. On ne fait donc que déclencher l'action ; la
+    // vraie confirmation de succès reste `game:dealt`
+    // (`_onGameDealtReceived`).
+    _gameRepository.startGame(
+      gameId: current.gameId,
+      playerId: current.localPlayerId,
+    );
   }
 
   void _onLeftRequested(LobbyLeftRequested event, Emitter<LobbyState> emit) {

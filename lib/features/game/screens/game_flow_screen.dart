@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../bloc/game_bloc.dart';
 import 'game_over_placeholder_screen.dart';
 import 'game_table_screen.dart';
+import '../widgets/scoring_info_button.dart';
 import 'round_scoring_placeholder_screen.dart';
 
 /// Bascule entre les écrans selon l'état du GameBloc.
@@ -29,6 +30,7 @@ class GameFlowScreen extends StatelessWidget {
       children: [
         BlocBuilder<GameBloc, GameState>(
           builder: (context, state) {
+            debugPrint('[GameFlowScreen] state reçu : $state');
             if (state is GameDealingState) {
               return const _SimpleLoading(label: 'Distribution des cartes...');
             }
@@ -57,6 +59,17 @@ class GameFlowScreen extends StatelessWidget {
           left: 8,
           child: SafeArea(
             child: _LeaveGameButton(),
+          ),
+        ),
+        // Bouton "Valeur des cartes" — même principe, côté opposé.
+        // Toujours accessible : le Roi rouge = 0 est contre-intuitif et
+        // les joueurs doivent pouvoir vérifier à tout moment, pas
+        // seulement pendant le peek initial.
+        const Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            child: ScoringInfoButton(),
           ),
         ),
       ],
@@ -106,7 +119,7 @@ class _LeaveGameButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface.withOpacity(0.85),
+      color: AppColors.surface.withValues(alpha: 0.85),
       shape: const CircleBorder(),
       child: IconButton(
         icon: const Icon(Icons.logout, color: AppColors.danger),

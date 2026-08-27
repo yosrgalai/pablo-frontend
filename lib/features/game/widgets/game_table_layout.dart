@@ -33,6 +33,10 @@ class GameTableLayout extends StatelessWidget {
     this.onHandCardTap,
     this.selectedHandPositions = const {},
     this.disabledHandPositions = const {},
+    this.drawPileKey,
+    this.discardPileKey,
+    this.localHandKey,
+    this.opponentSeatKeyFor,
   });
 
   final PlayerModel localPlayer;
@@ -43,6 +47,15 @@ class GameTableLayout extends StatelessWidget {
   final void Function(int position)? onHandCardTap;
   final Set<int> selectedHandPositions;
   final Set<int> disabledHandPositions;
+
+  /// Ancrages de position pour `CardFlightLayer` (`game_table_screen.dart`
+  /// détient les clés, calcule les positions écran via
+  /// `key.currentContext`). `null` = animations de vol désactivées
+  /// (aucun crash, juste pas d'effet visuel).
+  final GlobalKey? drawPileKey;
+  final GlobalKey? discardPileKey;
+  final GlobalKey? localHandKey;
+  final GlobalKey Function(String playerId)? opponentSeatKeyFor;
 
   /// Au-delà de cet angle (par rapport à la verticale du centre), un
   /// adversaire est considéré "sur le côté" -> cartes empilées verticalement.
@@ -104,9 +117,15 @@ class GameTableLayout extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  DrawPileWidget(count: round.drawPileCount, onTap: onDrawTap, width: pileWidth),
+                  KeyedSubtree(
+                    key: drawPileKey,
+                    child: DrawPileWidget(count: round.drawPileCount, onTap: onDrawTap, width: pileWidth),
+                  ),
                   SizedBox(width: pileWidth * 0.4),
-                  DiscardPileWidget(topCard: round.discardTop, onTap: onDiscardTap, width: pileWidth),
+                  KeyedSubtree(
+                    key: discardPileKey,
+                    child: DiscardPileWidget(topCard: round.discardTop, onTap: onDiscardTap, width: pileWidth),
+                  ),
                 ],
               ),
             ),
@@ -116,12 +135,15 @@ class GameTableLayout extends StatelessWidget {
               left: 16,
               right: 16,
               bottom: isLandscape ? 8 : 24,
-              child: PlayerHandWidget(
-                hand: localPlayer.hand,
-                selectedPositions: selectedHandPositions,
-                disabledPositions: disabledHandPositions,
-                onCardTap: onHandCardTap,
-                maxCardHeight: handCardHeight,
+              child: KeyedSubtree(
+                key: localHandKey,
+                child: PlayerHandWidget(
+                  hand: localPlayer.hand,
+                  selectedPositions: selectedHandPositions,
+                  disabledPositions: disabledHandPositions,
+                  onCardTap: onHandCardTap,
+                  maxCardHeight: handCardHeight,
+                ),
               ),
             ),
           ],
@@ -168,12 +190,15 @@ class GameTableLayout extends StatelessWidget {
               left: dx,
               top: dy,
               width: seatWidth,
-              child: OpponentSeatWidget(
-                player: opponents[i],
-                maxWidth: seatWidth,
-                avatarSize: avatarSize,
-                maxCardHeight: cardHeight,
-                stackCardsVertically: isSide,
+              child: KeyedSubtree(
+                key: opponentSeatKeyFor?.call(opponents[i].id),
+                child: OpponentSeatWidget(
+                  player: opponents[i],
+                  maxWidth: seatWidth,
+                  avatarSize: avatarSize,
+                  maxCardHeight: cardHeight,
+                  stackCardsVertically: isSide,
+                ),
               ),
             );
           },

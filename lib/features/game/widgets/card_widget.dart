@@ -26,9 +26,7 @@ enum CardVisualState {
 
 /// Couleurs du design system (doc 03), utilisées pour les indicateurs
 /// d'état et le rendu de secours (fallback) si une image est introuvable.
-///
-/// TODO(commun): à terme, centraliser ces couleurs dans
-/// `core/theme/app_theme.dart` une fois le thème global construit.
+
 class _CardColors {
   _CardColors._();
 
@@ -111,6 +109,7 @@ class _CardWidgetState extends State<CardWidget>
     final isDisabled = widget.visualState == CardVisualState.disabled;
     final isSelected = widget.visualState == CardVisualState.selected;
     final isSelectable = widget.visualState == CardVisualState.selectable;
+    final zeroBadge = _buildZeroValueBadge();
 
     return GestureDetector(
       onTap: isDisabled ? null : widget.onTap,
@@ -152,6 +151,7 @@ class _CardWidgetState extends State<CardWidget>
                 ),
               ),
               if (isSelected) _buildSelectedBadge(),
+              ?zeroBadge,
             ],
           ),
         ),
@@ -191,6 +191,49 @@ class _CardWidgetState extends State<CardWidget>
           boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 3)],
         ),
         child: Icon(Icons.check, color: Colors.black, size: size * 0.7),
+      ),
+    );
+  }
+
+  /// Badge "0 pt" en bas à gauche — UNIQUEMENT sur le Roi rouge (♥/♦) et
+  /// le Joker, les deux seules cartes qui valent 0 (doc §7). Les autres
+  /// cartes rouges (2 à 10, As, Valet, Dame de cœur/carreau) gardent leur
+  /// valeur faciale normale : ce badge ne doit JAMAIS apparaître dessus,
+  /// pour ne pas laisser croire que "rouge = 0" en général.
+  ///
+  /// Position opposée au badge de sélection (haut-droite) pour ne jamais
+  /// se chevaucher, les deux pouvant être visibles en même temps.
+  Widget? _buildZeroValueBadge() {
+    final card = widget.card;
+    if (card.hidden) return null;
+
+    final isRedKing = card.rank == 'K' && card.isRedSuit == true;
+    final isJoker = card.rank == 'JOKER';
+    if (!isRedKing && !isJoker) return null;
+
+    final size = widget.width * 0.34;
+    return Positioned(
+      bottom: -size * 0.3,
+      left: -size * 0.3,
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: _CardColors.textDark, width: 1.5),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 3)],
+        ),
+        child: Text(
+          '0',
+          style: TextStyle(
+            color: _CardColors.textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: size * 0.55,
+            height: 1,
+          ),
+        ),
       ),
     );
   }
